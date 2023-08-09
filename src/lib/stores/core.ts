@@ -1,4 +1,7 @@
-import { writable } from "svelte/store";
+import { localStorageStore } from "@skeletonlabs/skeleton";
 import type { CreekSession } from "../types/core";
 
-export const currentSession = writable<CreekSession | null>(null);
+export const currentSession = localStorageStore<CreekSession | null>(
+	"currentSession",
+	null
+);
