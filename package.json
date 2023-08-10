@@ -44,6 +44,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@tailwindcss/typography": "^0.5.9",
 		"clsx": "^2.0.0",
 		"tailwind-merge": "^1.14.0"
 	}

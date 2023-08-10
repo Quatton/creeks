@@ -3,6 +3,8 @@ export type CreekSession = {
 	createdAt: Date;
 	title: string;
 	blocks: CreekBlock[];
+	content: string;
+	mode: "flow" | "edit";
 };
 
 export type CreekBlock = {

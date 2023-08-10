@@ -1,5 +1,9 @@
+<script>
+	import IconBookMarked from "~icons/lucide/book-marked";
+</script>
+
 <footer>
-	<p>
-		visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit
-	</p>
+	<a class="btn btn-icon" href="/notes">
+		<IconBookMarked />
+	</a>
 </footer>

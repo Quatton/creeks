@@ -23,11 +23,14 @@
 					id: crypto.randomUUID(),
 					createdAt: new Date(),
 					title: text,
-					blocks: []
+					mode: "flow",
+					blocks: [],
+					content: ""
 				};
 			}
 			return {
 				...session,
+				content: session.content + text + "\n",
 				blocks: [
 					...session.blocks,
 					{
@@ -58,7 +61,14 @@
 					if (!sessions || !$currentSession) return [];
 					return [...sessions, $currentSession];
 				});
-				currentSession.set(null);
+				// currentSession.set(null);
+				currentSession.update((session) => {
+					if (!session) return null;
+					return {
+						...session,
+						done: true
+					};
+				});
 			}
 		}
 	};
@@ -83,7 +93,7 @@
 
 <!-- svelte-ignore a11y-autofocus -->
 <textarea
-	class="w-full resize-none outline-none bg-transparent text-3xl z-20"
+	class="w-full h-full resize-none outline-none bg-transparent text-3xl z-20"
 	placeholder={$currentSession ? "Keep writing..." : "I want to write about..."}
 	bind:value={text}
 	autofocus
