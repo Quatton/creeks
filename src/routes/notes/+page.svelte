@@ -7,6 +7,7 @@
 	} from "@skeletonlabs/skeleton";
 	import { derived } from "svelte/store";
 	import { format } from "date-fns";
+	import { goto } from "$app/navigation";
 
 	const convertedSessions = derived(sessions, ($sessions) => {
 		if (!$sessions) return [];
@@ -36,5 +37,11 @@
 </svelte:head>
 
 <section class="container self-start">
-	<Table source={sessionTable} interactive />
+	<Table
+		source={sessionTable}
+		interactive
+		on:selected={(e) => {
+			goto(`/notes/${e.detail[0]}`);
+		}}
+	/>
 </section>

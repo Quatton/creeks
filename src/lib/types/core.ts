@@ -2,7 +2,7 @@ export type CreekSession = {
 	id: string;
 	createdAt: Date;
 	title: string;
-	blocks: CreekBlock[];
+	// blocks: CreekBlock[];
 	content: string;
 	mode: "flow" | "edit";
 };

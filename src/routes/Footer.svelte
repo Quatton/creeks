@@ -2,8 +2,6 @@
 	import IconBookMarked from "~icons/lucide/book-marked";
 	import IconPenSquare from "~icons/lucide/pen-square";
 	import { page } from "$app/stores";
-
-	$: console.log($page.url.pathname);
 </script>
 
 <footer class="flex justify-between">

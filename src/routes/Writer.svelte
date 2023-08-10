@@ -23,20 +23,20 @@
 					createdAt: new Date(),
 					title: text,
 					mode: "flow",
-					blocks: [],
+					// blocks: [],
 					content: ""
 				};
 			}
 			return {
 				...session,
-				content: session.content + text + "\n",
-				blocks: [
-					...session.blocks,
-					{
-						createdAt: new Date(),
-						content: text
-					}
-				]
+				content: session.content + text + "\n"
+				// blocks: [
+				// 	...session.blocks,
+				// 	{
+				// 		createdAt: new Date(),
+				// 		content: text
+				// 	}
+				// ]
 			};
 		});
 	}

@@ -45,8 +45,14 @@
 	"type": "module",
 	"dependencies": {
 		"@tailwindcss/typography": "^0.5.9",
+		"@tiptap/core": "^2.0.4",
+		"@tiptap/pm": "^2.0.4",
+		"@tiptap/starter-kit": "^2.0.4",
+		"@types/marked": "^5.0.1",
 		"clsx": "^2.0.0",
 		"date-fns": "^2.30.0",
-		"tailwind-merge": "^1.14.0"
+		"marked": "^7.0.2",
+		"tailwind-merge": "^1.14.0",
+		"tiptap-markdown": "^0.8.2"
 	}
 }
