@@ -17,15 +17,15 @@
 			editorProps: {
 				attributes: {
 					class:
-						"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none"
+						"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none prose-p:my-1 prose-li:my-0"
 				}
 			},
 			extensions: [
 				StarterKit,
 				Markdown.configure({
 					html: true, // Allow HTML input/output
-					tightLists: true, // No <p> inside <li> in markdown output
-					tightListClass: "tight", // Add class to <ul> allowing you to remove <p> margins when tight
+					// tightLists: true, // No <p> inside <li> in markdown output
+					// tightListClass: "my-0", // Add class to <ul> allowing you to remove <p> margins when tight
 					bulletListMarker: "-", // <li> prefix in markdown output
 					linkify: false, // Create links from "https://..." text
 					breaks: true, // New lines (\n) in markdown input are converted to <br>

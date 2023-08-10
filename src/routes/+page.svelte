@@ -18,37 +18,46 @@
 		});
 	}
 
+	function saveAndEndSession() {
+		sessions.update((sessions) => {
+			if (!sessions || !$currentSession) return [];
+			// find the session by id if it exists
+			const session = sessions.find(
+				(session) => session.id === $currentSession?.id
+			);
+
+			if (!session) return [...sessions, $currentSession];
+
+			// if it exists, update it
+			return sessions.map((session) => {
+				if (session.id === $currentSession?.id) {
+					return $currentSession;
+				}
+				return session;
+			});
+		});
+		currentSession.set(null);
+		currentSession.update((session) => {
+			if (!session) return null;
+			return {
+				...session,
+				done: true
+			};
+		});
+	}
+
 	const modal: ModalSettings = {
 		type: "confirm",
 		title: "End session?",
 		body: "Are you sure you want to end this session?",
 		response: (response: boolean) => {
 			if (response) {
-				sessions.update((sessions) => {
-					if (!sessions || !$currentSession) return [];
-					// find the session by id if it exists
-					const session = sessions.find(
-						(session) => session.id === $currentSession?.id
-					);
-
-					if (!session) return [...sessions, $currentSession];
-
-					// if it exists, update it
-					return sessions.map((session) => {
-						if (session.id === $currentSession?.id) {
-							return $currentSession;
-						}
-						return session;
-					});
-				});
-				currentSession.set(null);
-				currentSession.update((session) => {
-					if (!session) return null;
-					return {
-						...session,
-						done: true
-					};
-				});
+				if ($currentSession?.mode === "flow") {
+					toggleMode();
+				}
+				if ($currentSession?.mode === "edit") {
+					saveAndEndSession();
+				}
 			}
 		}
 	};
@@ -83,7 +92,7 @@
 		<p>What's the goal of this session?</p>
 	{/if}
 
-	<div class="relative h-96">
+	<div class="relative h-96 overflow-y-auto">
 		{#if !$currentSession || $currentSession.mode !== "edit"}
 			<Writer />
 			{#each $disappearingStore as disappearing (disappearing.id)}
