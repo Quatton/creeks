@@ -3,10 +3,10 @@
 	import { Editor } from "@tiptap/core";
 	import StarterKit from "@tiptap/starter-kit";
 	import type { CreekSession } from "$lib/types/core";
-	import { sessions } from "$lib/stores/core";
+	import { currentSession, sessions } from "$lib/stores/core";
 	import { Markdown } from "tiptap-markdown";
 	import type { defaultMarkdownSerializer } from "@tiptap/pm/markdown";
-	let element: Element;
+	let element: HTMLDivElement;
 	let editor: InstanceType<typeof Editor>;
 
 	export let note: CreekSession;
@@ -17,7 +17,7 @@
 			editorProps: {
 				attributes: {
 					class:
-						"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none"
+						"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none"
 				}
 			},
 			extensions: [
@@ -37,11 +37,24 @@
 			onTransaction: ({ editor }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
-				sessions.update((sessions) => {
-					const index = sessions.findIndex((session) => session.id === note.id);
-					sessions[index].content = editor.storage.markdown.getMarkdown();
-					return sessions;
-				});
+				const index = $sessions.findIndex((session) => session.id === note.id);
+				if (index !== -1) {
+					sessions.update((sessions) => {
+						sessions[index].content = editor.storage.markdown.getMarkdown();
+						return sessions;
+					});
+				} else {
+					currentSession.update((session) => {
+						if (session) {
+							return {
+								...session,
+								content: editor.storage.markdown.getMarkdown()
+							};
+						} else {
+							return session;
+						}
+					});
+				}
 			}
 		});
 	});

@@ -6,6 +6,17 @@
 	import Result from "./Result.svelte";
 
 	import Writer from "./Writer.svelte";
+	import Tiptap from "$lib/components/Tiptap.svelte";
+
+	function toggleMode() {
+		currentSession.update((session) => {
+			if (!session) return null;
+			return {
+				...session,
+				mode: session.mode === "edit" ? "flow" : "edit"
+			};
+		});
+	}
 
 	const modal: ModalSettings = {
 		type: "confirm",
@@ -52,13 +63,7 @@
 	on:keydown={(e) => {
 		if (e.altKey && e.key === "w" && $currentSession) {
 			e.preventDefault();
-			currentSession.update((session) => {
-				if (!session) return null;
-				return {
-					...session,
-					mode: session.mode === "edit" ? "flow" : "edit"
-				};
-			});
+			toggleMode();
 		}
 		if (e.key === "Escape") {
 			e.preventDefault();
@@ -70,7 +75,7 @@
 
 <section class="mx-auto p-4 container space-y-1">
 	{#if $currentSession}
-		<h1 class="text-3xl font-bold">{$currentSession.title}</h1>
+		<h1 class="h1">{$currentSession.title}</h1>
 		<!-- {#each $currentSession.blocks as block}
 				<p>{block.content}</p>
 			{/each} -->
@@ -85,12 +90,22 @@
 				<Disappearing setting={disappearing} className="text-3xl" />
 			{/each}
 		{:else if $currentSession.mode === "edit"}
-			<Result />
+			<Tiptap note={$currentSession} />
 		{/if}
 	</div>
 
 	<div class="space-x-1">
-		<span class="chip variant-filled"> Enter | Flush </span>
-		<span class="chip variant-filled-error"> ESC | End session </span>
+		<button class="chip variant-filled"> Enter | Flush </button>
+		<button
+			class="chip variant-filled-error"
+			on:click={() => {
+				modalStore.trigger(modal);
+			}}
+		>
+			ESC | End session
+		</button>
+		<button class="chip variant-filled-primary" on:click={toggleMode}>
+			Alt+W | Toggle mode
+		</button>
 	</div>
 </section>
