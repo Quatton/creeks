@@ -6,7 +6,6 @@ export type CreekSession = {
 };
 
 export type CreekBlock = {
-	id: string;
 	createdAt: Date;
 	content: string;
 };

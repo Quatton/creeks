@@ -5,3 +5,5 @@ export const currentSession = localStorageStore<CreekSession | null>(
 	"currentSession",
 	null
 );
+
+export const sessions = localStorageStore<CreekSession[]>("sessions", []);

@@ -6,14 +6,19 @@
 	import "../app.postcss";
 	import Header from "./Header.svelte";
 	import Footer from "./Footer.svelte";
+	import { AppShell, Modal } from "@skeletonlabs/skeleton";
+	import { cn } from "$lib/utils/cn";
 </script>
 
-<div class="flex flex-col" style="height: 100svh">
-	<Header />
+<Modal />
+<AppShell slotPageContent="grid place-items-center">
+	<svelte:fragment slot="header">
+		<Header />
+	</svelte:fragment>
 
-	<main class="flex-1 grid place-content-center">
-		<slot />
-	</main>
+	<slot />
 
-	<Footer />
-</div>
+	<svelte:fragment slot="pageFooter">
+		<Footer />
+	</svelte:fragment>
+</AppShell>
