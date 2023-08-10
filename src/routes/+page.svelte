@@ -1,10 +1,46 @@
 <script lang="ts">
 	import Disappearing from "$lib/components/Disappearing.svelte";
-	import { currentSession } from "$lib/stores/core";
+	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
+	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 	import Result from "./Result.svelte";
 
 	import Writer from "./Writer.svelte";
+
+	const modal: ModalSettings = {
+		type: "confirm",
+		title: "End session?",
+		body: "Are you sure you want to end this session?",
+		response: (response: boolean) => {
+			if (response) {
+				sessions.update((sessions) => {
+					if (!sessions || !$currentSession) return [];
+					// find the session by id if it exists
+					const session = sessions.find(
+						(session) => session.id === $currentSession?.id
+					);
+
+					if (!session) return [...sessions, $currentSession];
+
+					// if it exists, update it
+					return sessions.map((session) => {
+						if (session.id === $currentSession?.id) {
+							return $currentSession;
+						}
+						return session;
+					});
+				});
+				currentSession.set(null);
+				currentSession.update((session) => {
+					if (!session) return null;
+					return {
+						...session,
+						done: true
+					};
+				});
+			}
+		}
+	};
 </script>
 
 <svelte:head>
@@ -27,6 +63,11 @@
 					mode: session.mode === "edit" ? "flow" : "edit"
 				};
 			});
+		}
+		if (e.key === "Escape") {
+			e.preventDefault();
+			// save and end session
+			modalStore.trigger(modal);
 		}
 	}}
 />

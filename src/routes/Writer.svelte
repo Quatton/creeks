@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 
 	/**
 	 * Logic:
@@ -50,28 +49,6 @@
 			duration: 3000
 		});
 	}
-
-	const modal: ModalSettings = {
-		type: "confirm",
-		title: "End session?",
-		body: "Are you sure you want to end this session?",
-		response: (response: boolean) => {
-			if (response) {
-				sessions.update((sessions) => {
-					if (!sessions || !$currentSession) return [];
-					return [...sessions, $currentSession];
-				});
-				// currentSession.set(null);
-				currentSession.update((session) => {
-					if (!session) return null;
-					return {
-						...session,
-						done: true
-					};
-				});
-			}
-		}
-	};
 </script>
 
 <svelte:window
@@ -82,11 +59,6 @@
 			push(text);
 			pushAnimate(text);
 			text = "";
-		}
-		if (e.key === "Escape") {
-			e.preventDefault();
-			// save and end session
-			modalStore.trigger(modal);
 		}
 	}}
 />
