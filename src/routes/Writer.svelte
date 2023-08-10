@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { currentSession, sessions } from "$lib/stores/core";
+	import { disappearingStore } from "$lib/stores/disappearing";
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 
 	/**
@@ -38,6 +39,15 @@
 		});
 	}
 
+	function pushAnimate(text: string) {
+		const id = crypto.randomUUID();
+		disappearingStore.add({
+			id,
+			text,
+			duration: 3000
+		});
+	}
+
 	const modal: ModalSettings = {
 		type: "confirm",
 		title: "End session?",
@@ -60,6 +70,7 @@
 			e.preventDefault();
 			if (text.trim() === "") return;
 			push(text);
+			pushAnimate(text);
 			text = "";
 		}
 		if (e.key === "Escape") {
@@ -72,7 +83,7 @@
 
 <!-- svelte-ignore a11y-autofocus -->
 <textarea
-	class="w-full resize-none outline-none bg-transparent text-3xl"
+	class="w-full resize-none outline-none bg-transparent text-3xl z-20"
 	placeholder={$currentSession ? "Keep writing..." : "I want to write about..."}
 	bind:value={text}
 	autofocus
