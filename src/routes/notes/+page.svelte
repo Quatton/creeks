@@ -15,7 +15,11 @@
 			return {
 				...session,
 				// Wed, 21 Jul 2021 00:00
-				createdAt: format(new Date(session.createdAt), "ccc, dd MMM yyyy HH:mm")
+				createdAt: format(
+					new Date(session.createdAt),
+					"ccc, dd MMM yyyy HH:mm"
+				),
+				content: session.content.slice(0, 10) + "..."
 			};
 		});
 	});
@@ -36,7 +40,7 @@
 	<meta name="description" content="Your saved notes" />
 </svelte:head>
 
-<section class="container self-start">
+<section class="container self-start p-2">
 	<Table
 		source={sessionTable}
 		interactive
