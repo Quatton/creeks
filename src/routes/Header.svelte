@@ -15,7 +15,7 @@
 
 	<div class="w-12 h-12">
 		<a
-			href="https://github.com/sveltejs/kit"
+			href="https://github.com/Quatton/creeks"
 			class="flex items-center justify-center w-full h-full"
 		>
 			<img src={github} alt="GitHub" class="w-8 h-8 object-contain" />
