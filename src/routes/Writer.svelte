@@ -29,7 +29,10 @@
 			}
 			return {
 				...session,
-				content: session.content + text + "\n"
+				content:
+					session.content.at(-1) === "\n"
+						? session.content + text
+						: session.content + "\n" + text
 				// blocks: [
 				// 	...session.blocks,
 				// 	{

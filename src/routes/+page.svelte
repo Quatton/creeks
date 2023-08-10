@@ -56,10 +56,6 @@
 				if (!session) return null;
 				return {
 					...session,
-					content:
-						session.content.at(-1) === "\n"
-							? session.content
-							: session.content + "\n",
 					mode: session.mode === "edit" ? "flow" : "edit"
 				};
 			});
