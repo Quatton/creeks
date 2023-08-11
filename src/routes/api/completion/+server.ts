@@ -11,9 +11,15 @@ export async function POST({ request }) {
 
 	const body = JSON.stringify({
 		prompt: `The following is an excerpt of user's subconcious thoughts. Fix the grammar and spelling, and add punctuation where necessary.
-    Do not paraphrase or change the meaning of the text. Write response in text only without any introduction or message.
+    Do not change the meaning of the text.
+    If possible, please organize the user's thoughts into paragraphs and bullet points. Specify action points to make the user's thoughts productive.
+    Reduce redundancy and remove unnecessary information.
+    Write your response in a markdown file.
     
-    ${prompt ? prompt : "(no prompt please return only empty string)"}`,
+    # Original text
+    ${prompt ? prompt : "(no prompt please return only empty string)"}
+    
+    # Corrected text`,
 		model: "command-nightly",
 		max_tokens: 300,
 		stop_sequences: [],

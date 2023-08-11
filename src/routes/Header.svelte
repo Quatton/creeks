@@ -1,7 +1,7 @@
 <script>
 	import logo from "$lib/images/memoiz.svg";
 	import darkLogo from "$lib/images/memoiz-dark.svg";
-	import github from "$lib/images/github.svg";
+	import GrommetIconsGithub from "~icons/grommet-icons/github";
 	import { modeCurrent } from "@skeletonlabs/skeleton";
 </script>
 
@@ -21,7 +21,7 @@
 			href="https://github.com/Quatton/creeks"
 			class="flex items-center justify-center w-full h-full"
 		>
-			<img src={github} alt="GitHub" class="w-8 h-8 object-contain" />
+			<GrommetIconsGithub class="w-8 h-8" />
 		</a>
 	</div>
 </header>

@@ -84,22 +84,21 @@
 
 <section class="mx-auto p-4 container space-y-1">
 	{#if $currentSession}
-		<h1 class="h1">{$currentSession.title}</h1>
-		<!-- {#each $currentSession.blocks as block}
-				<p>{block.content}</p>
-			{/each} -->
+		<h1 class="h1 -z-10">{$currentSession.title}</h1>
 	{:else}
 		<p>What's the goal of this session?</p>
 	{/if}
 
-	<div class="relative h-96 overflow-y-auto">
+	<div class="relative h-96 overflow-y-visible">
 		{#if !$currentSession || $currentSession.mode !== "edit"}
 			<Writer />
 			{#each $disappearingStore as disappearing (disappearing.id)}
 				<Disappearing setting={disappearing} className="text-3xl" />
 			{/each}
 		{:else if $currentSession.mode === "edit"}
-			<Tiptap note={$currentSession} />
+			<div class="h-full overflow-y-auto">
+				<Tiptap note={$currentSession} />
+			</div>
 		{/if}
 	</div>
 
