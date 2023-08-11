@@ -5,11 +5,17 @@
 	import type { CreekSession } from "$lib/types/core";
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { Markdown } from "tiptap-markdown";
-	import type { defaultMarkdownSerializer } from "@tiptap/pm/markdown";
 	let element: HTMLDivElement;
 	let editor: InstanceType<typeof Editor>;
 
 	export let note: CreekSession;
+
+	import { useCompletion } from "ai/svelte";
+
+	let prev = "";
+	const { completion, complete } = useCompletion({
+		api: "/api/completion"
+	});
 
 	onMount(() => {
 		editor = new Editor({
@@ -57,6 +63,15 @@
 				}
 			}
 		});
+		editor.commands.selectAll();
+		editor
+			.chain()
+			.focus(editor.state.selection.to)
+			.setTextSelection({
+				from: editor.state.selection.to,
+				to: editor.state.selection.to
+			})
+			.run();
 	});
 
 	onDestroy(() => {
@@ -64,6 +79,28 @@
 			editor.destroy();
 		}
 	});
+
+	function tidy() {
+		const { from, to } = editor.state.selection;
+		const text = editor.state.doc.textBetween(from, to);
+		const unsub = completion.subscribe((completion) => {
+			const diff = completion.slice(prev.length);
+			prev = completion;
+			editor.commands.insertContent(diff);
+		});
+		complete(text).then(() => {
+			unsub();
+		});
+	}
 </script>
+
+<svelte:window
+	on:keydown={(e) => {
+		if (e.key === "t" && e.altKey) {
+			e.preventDefault();
+			tidy();
+		}
+	}}
+/>
 
 <div bind:this={element} />
