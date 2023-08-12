@@ -7,6 +7,7 @@
 
 	import Writer from "./Writer.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
+	import { cn } from "$lib/utils/cn";
 
 	function toggleMode() {
 		currentSession.update((session) => {
@@ -82,12 +83,14 @@
 	}}
 />
 
-<section class="mx-auto p-4 container space-y-1">
-	{#if $currentSession}
-		<h1 class="h1 -z-10">{$currentSession.title}</h1>
-	{:else}
-		<p>What's the goal of this session?</p>
-	{/if}
+<section class={cn("mx-auto p-4 container max-w-4xl space-y-1")}>
+	<div class="text-center">
+		{#if $currentSession}
+			<strong>🎯{$currentSession.title}</strong>
+		{:else}
+			<strong>What's the goal of this session?</strong>
+		{/if}
+	</div>
 
 	<div class="relative h-96 overflow-y-visible">
 		{#if !$currentSession || $currentSession.mode !== "edit"}

@@ -1,6 +1,7 @@
 <script>
 	import IconBookMarked from "~icons/lucide/book-marked";
 	import IconPenSquare from "~icons/lucide/pen-square";
+	import LucideUserCircle2 from "~icons/lucide/user-circle-2";
 	import { page } from "$app/stores";
 
 	const links = [
@@ -9,8 +10,8 @@
 			Icon: IconBookMarked
 		},
 		{
-			href: "/",
-			Icon: IconPenSquare
+			href: "/account",
+			Icon: LucideUserCircle2
 		}
 	];
 </script>
@@ -18,12 +19,13 @@
 <footer class="flex justify-between">
 	{#each links as { href, Icon }}
 		<a
-			class="btn-icon {$page.url.pathname === href
+			class="btn-icon w-12 h-12 flex items-center justify-center {$page.url
+				.pathname === href
 				? 'cursor-not-allowed text-slate-500'
 				: 'btn'}"
 			{href}
 		>
-			<Icon />
+			<Icon class="w-8 h-8" />
 		</a>
 	{/each}
 </footer>
