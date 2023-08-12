@@ -11,10 +11,21 @@
 	export let note: CreekSession;
 
 	import { useCompletion } from "ai/svelte";
+	import { cn } from "$lib/utils/cn";
 
-	let prev = "";
 	const { completion, complete } = useCompletion({
-		api: "/api/completion"
+		api: "/api/completion",
+		onFinish: (_, completion) => {
+			const inside = completion.match(/\`\`\`(.*)\n([\s\S]*)\n\`\`\`/);
+
+			// set content to inside instead
+
+			if (inside) {
+				editor.commands.setContent(inside[2]);
+			} else {
+				editor.commands.setContent(completion);
+			}
+		}
 	});
 
 	onMount(() => {
@@ -22,8 +33,9 @@
 			element: element,
 			editorProps: {
 				attributes: {
-					class:
-						"prose dark:prose-invert prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none prose-p:my-1 prose-li:my-0"
+					class: cn(
+						"prose dark:prose-invert prose-sm sm:prose sm:max-w-3xl lg:prose-lg focus:outline-none prose-p:my-1 prose-li:my-0"
+					)
 				}
 			},
 			extensions: [
@@ -81,25 +93,11 @@
 	});
 
 	function tidy() {
-		const { from, to } = editor.state.selection;
-		const text = editor.state.doc.textBetween(from, to);
+		const text = editor.storage.markdown.getMarkdown();
 		const unsub = completion.subscribe((completion) => {
-			const diff = completion.slice(prev.length);
-			prev = completion;
-			editor.commands.insertContent(diff);
-			// // console.log(diff);
-			// editor
-			// 	.chain()
-			// 	.focus()
-			// 	.deleteRange({
-			// 		from,
-			// 		to: from + prev.length
-			// 	})
-			// 	.insertContent(completion)
-			// 	.run();
+			editor.commands.setContent(completion);
 		});
 		complete(text).then(() => {
-			prev = "";
 			unsub();
 		});
 	}

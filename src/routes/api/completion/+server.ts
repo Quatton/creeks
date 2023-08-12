@@ -6,22 +6,34 @@ export const config = {
 	runtime: "edge"
 };
 
+const PROMPT = (prompt: string) =>
+	`[CONTEXT]
+I am a highly intelligent bot for cleaning up fuzzy thoughts.
+Write me any unstructured text and I will bullet point, summarize, make action items, and more.
+
+[INSTRUCTIONS]
+1. Write a response in markdown format, and nothing else other than the response.
+2. Fix any grammar and spelling mistakes.
+3. Remove redundant information.
+4. Do not add any new information.
+
+[RESPONSE FORMAT]
+\`\`\`markdown
+...
+\`\`\`
+
+[ORIGINAL TEXT]
+${prompt ? prompt : "(no prompt please return only empty string)"}
+
+[RESPONSE]`.trim();
+
 export async function POST({ request }) {
 	const { prompt } = await request.json();
 
 	const body = JSON.stringify({
-		prompt: `The following is an excerpt of user's subconcious thoughts. Fix the grammar and spelling, and add punctuation where necessary.
-    Do not change the meaning of the text.
-    If possible, please organize the user's thoughts into paragraphs and bullet points. Specify action points to make the user's thoughts productive.
-    Reduce redundancy and remove unnecessary information.
-    Write your response in a markdown file.
-    
-    # Original text
-    ${prompt ? prompt : "(no prompt please return only empty string)"}
-    
-    # Corrected text`,
+		prompt: PROMPT(prompt),
 		model: "command-nightly",
-		max_tokens: 300,
+		max_tokens: 2048,
 		stop_sequences: [],
 		temperature: 0.1,
 		stream: true
