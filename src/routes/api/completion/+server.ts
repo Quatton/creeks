@@ -7,25 +7,16 @@ export const config = {
 };
 
 const PROMPT = (prompt: string) =>
-	`[CONTEXT]
-I am a highly intelligent bot for cleaning up fuzzy thoughts.
-Write me any unstructured text and I will bullet point, summarize, make action items, and more.
-
+	`[ORIGINAL TEXT]
+${prompt ? prompt : "(no prompt please return only empty string)"}
+	
 [INSTRUCTIONS]
 1. Write a response in markdown format, and nothing else other than the response.
 2. Fix any grammar and spelling mistakes.
 3. Remove redundant information.
 4. Do not add any new information.
-
-[RESPONSE FORMAT]
-\`\`\`markdown
-...
-\`\`\`
-
-[ORIGINAL TEXT]
-${prompt ? prompt : "(no prompt please return only empty string)"}
-
-[RESPONSE]`.trim();
+5. Make bullet point and action items. Summarize the response as needed.
+`.trim();
 
 export async function POST({ request }) {
 	const { prompt } = await request.json();
