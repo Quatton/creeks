@@ -118,5 +118,8 @@
 		<button class="chip variant-filled-primary" on:click={toggleMode}>
 			Alt+W | Toggle mode
 		</button>
+		{#if $currentSession?.mode === "edit"}
+			<button class="chip variant-filled-primary"> Alt+T | Tidy </button>
+		{/if}
 	</div>
 </section>
