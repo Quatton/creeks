@@ -28,7 +28,7 @@
 		}
 	});
 
-	onMount(() => {
+	onMount(async () => {
 		editor = new Editor({
 			element: element,
 			editorProps: {
@@ -92,12 +92,12 @@
 		}
 	});
 
-	function tidy() {
+	export async function tidy() {
 		const text = editor.storage.markdown.getMarkdown();
 		const unsub = completion.subscribe((completion) => {
 			editor.commands.setContent(completion);
 		});
-		complete(text).then(() => {
+		await complete(text).then(() => {
 			unsub();
 		});
 	}

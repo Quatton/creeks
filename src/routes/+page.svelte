@@ -3,11 +3,12 @@
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
-	import Result from "./Result.svelte";
 
 	import Writer from "./Writer.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
 	import { cn } from "$lib/utils/cn";
+
+	let tiptap: Tiptap;
 
 	function toggleMode() {
 		currentSession.update((session) => {
@@ -53,11 +54,13 @@
 		body: "Are you sure you want to end this session?",
 		response: (response: boolean) => {
 			if (response) {
-				if ($currentSession?.mode === "flow") {
-					toggleMode();
-				}
-				if ($currentSession?.mode === "edit") {
-					saveAndEndSession();
+				switch ($currentSession?.mode) {
+					case "flow":
+						toggleMode();
+						break;
+					case "edit":
+						saveAndEndSession();
+						break;
 				}
 			}
 		}
@@ -100,7 +103,7 @@
 			{/each}
 		{:else if $currentSession.mode === "edit"}
 			<div class="h-full overflow-y-auto">
-				<Tiptap note={$currentSession} />
+				<Tiptap note={$currentSession} bind:this={tiptap} />
 			</div>
 		{/if}
 	</div>
@@ -119,7 +122,9 @@
 			Alt+W | Toggle mode
 		</button>
 		{#if $currentSession?.mode === "edit"}
-			<button class="chip variant-filled-primary"> Alt+T | Tidy </button>
+			<button class="chip variant-filled-secondary" on:click={tiptap.tidy}>
+				Alt+T | Tidy
+			</button>
 		{/if}
 	</div>
 </section>
