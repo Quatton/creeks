@@ -9,9 +9,7 @@
 	export let className = "";
 	export let setting: DisappearingSettings;
 
-	onMount(() => {
-		disappearingStore.remove(setting.id);
-	});
+	$: disappearingStore.remove(setting.id);
 </script>
 
 <div

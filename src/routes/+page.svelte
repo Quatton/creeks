@@ -1,130 +1,89 @@
 <script lang="ts">
 	import Disappearing from "$lib/components/Disappearing.svelte";
-	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+	import { onMount } from "svelte";
 
-	import Writer from "./Writer.svelte";
-	import Tiptap from "$lib/components/Tiptap.svelte";
-	import { cn } from "$lib/utils/cn";
+	let text = "";
+	let index = 0;
+	let jndex = 0;
+	let timeout: NodeJS.Timeout;
 
-	let tiptap: Tiptap;
+	let texts = [
+		"Imagine a notebook that you don't need to care about the structure.",
 
-	function toggleMode() {
-		currentSession.update((session) => {
-			if (!session) return null;
-			return {
-				...session,
-				mode: session.mode === "edit" ? "flow" : "edit"
-			};
+		"Just keep writing.",
+		"And, writing.",
+		"Even misspeliling.",
+		"Then once you're done, everything is beautifully organized."
+	];
+
+	/**
+	 * Logic:
+	 *
+	 * 1. Start from index = 0
+	 * 2. Keep adding the next character (texts[index][jndex]) to the text, delay 50ms
+	 * 3. If reaches the end, delay 500ms, then flush the text (setting it to "")
+	 * 4. Add the text to the disappearing store (keep in mind that the text is already "" so you should use the texts[index])
+	 * 5. Increment the index and reset the jndex to 0
+	 * 6. If index reaches texts.length, reset everything to 0 and delay 500ms
+	 */
+
+	// if next character available increment jndex after 50ms
+
+	$: text = texts[index].slice(0, jndex + 1);
+	$: if (jndex < texts[index].length) {
+		setTimeout(() => {
+			jndex++;
+		}, 50);
+	} else {
+		setTimeout(() => {
+			flush(text);
+			text = "";
+			index = (index + 1) % texts.length;
+			jndex = 0;
+		}, texts[index].length * 10 + 500);
+	}
+
+	function flush(text: string) {
+		disappearingStore.add({
+			id: index.toString(),
+			text,
+			duration: 3000
 		});
 	}
 
-	function saveAndEndSession() {
-		sessions.update((sessions) => {
-			if (!sessions || !$currentSession) return [];
-			// find the session by id if it exists
-			const session = sessions.find(
-				(session) => session.id === $currentSession?.id
-			);
-
-			if (!session) return [...sessions, $currentSession];
-
-			// if it exists, update it
-			return sessions.map((session) => {
-				if (session.id === $currentSession?.id) {
-					return $currentSession;
-				}
-				return session;
-			});
-		});
-		currentSession.set(null);
-		currentSession.update((session) => {
-			if (!session) return null;
-			return {
-				...session,
-				done: true
-			};
-		});
-	}
-
-	const modal: ModalSettings = {
-		type: "confirm",
-		title: "End session?",
-		body: "Are you sure you want to end this session?",
-		response: (response: boolean) => {
-			if (response) {
-				switch ($currentSession?.mode) {
-					case "flow":
-						toggleMode();
-						break;
-					case "edit":
-						saveAndEndSession();
-						break;
-				}
-			}
-		}
-	};
+	onMount(() => {
+		return () => {
+			clearTimeout(timeout);
+		};
+	});
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
-
-<svelte:window
-	on:keydown={(e) => {
-		if (e.altKey && e.key === "w" && $currentSession) {
-			e.preventDefault();
-			toggleMode();
-		}
-		if (e.key === "Escape") {
-			e.preventDefault();
-			// save and end session
-			modalStore.trigger(modal);
-		}
-	}}
-/>
-
-<section class={cn("mx-auto p-4 container max-w-4xl space-y-1")}>
-	<div class="text-center">
-		{#if $currentSession}
-			<strong>🎯{$currentSession.title}</strong>
-		{:else}
-			<strong>What's the goal of this session?</strong>
-		{/if}
-	</div>
-
-	<div class="relative h-96 overflow-y-visible">
-		{#if !$currentSession || $currentSession.mode !== "edit"}
-			<Writer />
-			{#each $disappearingStore as disappearing (disappearing.id)}
-				<Disappearing setting={disappearing} className="text-3xl" />
-			{/each}
-		{:else if $currentSession.mode === "edit"}
-			<div class="h-full overflow-y-auto">
-				<Tiptap note={$currentSession} bind:this={tiptap} />
-			</div>
-		{/if}
-	</div>
-
-	<div class="space-x-1">
-		<button class="chip variant-filled"> Enter | Flush </button>
-		<button
-			class="chip variant-filled-error"
-			on:click={() => {
-				modalStore.trigger(modal);
-			}}
+<section class="mx-auto p-4 container max-w-4xl space-y-1">
+	<article>
+		<h1
+			class="text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-secondary-400 font-bold"
 		>
-			ESC | End session
-		</button>
-		<button class="chip variant-filled-primary" on:click={toggleMode}>
-			Alt+W | Toggle mode
-		</button>
-		{#if $currentSession?.mode === "edit"}
-			<button class="chip variant-filled-secondary" on:click={tiptap.tidy}>
-				Alt+T | Tidy
-			</button>
-		{/if}
-	</div>
+			Creeks
+		</h1>
+		<h2 class="h2 text-secondary-300">
+			The most zen way to keep your thoughts flowing.
+		</h2>
+		<div class="relative h-48 overflow-y-visible">
+			{#each $disappearingStore as disappearing}
+				<Disappearing
+					setting={disappearing}
+					className="text-3xl text-primary-300-600-token"
+				/>
+			{/each}
+			<textarea
+				class="text-primary-400-500-token w-full resize-none outline-none bg-transparent text-3xl z-40 h-full"
+				bind:value={text}
+				disabled
+			/>
+		</div>
+		<div class="flex justify-center">
+			<a href="/new" class="btn variant-filled-primary">Try it out</a>
+		</div>
+	</article>
 </section>

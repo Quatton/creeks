@@ -1,8 +1,9 @@
 <script>
 	import logo from "$lib/images/memoiz.svg";
 	import darkLogo from "$lib/images/memoiz-dark.svg";
-	import GrommetIconsGithub from "~icons/grommet-icons/github";
+	import LucideUserCircle2 from "~icons/lucide/user-circle-2";
 	import { modeCurrent } from "@skeletonlabs/skeleton";
+	import { page } from "$app/stores";
 </script>
 
 <header class="flex justify-between">
@@ -18,10 +19,10 @@
 
 	<div class="w-12 h-12">
 		<a
-			href="https://github.com/Quatton/creeks"
-			class="flex items-center justify-center w-full h-full"
+			class="btn-icon w-12 h-12 flex items-center justify-center"
+			href="/account"
 		>
-			<GrommetIconsGithub class="w-8 h-8" />
+			<LucideUserCircle2 class="w-8 h-8" />
 		</a>
 	</div>
 </header>
