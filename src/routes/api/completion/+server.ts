@@ -3,9 +3,9 @@ import { OpenAIStream, StreamingTextResponse } from "ai";
 import { OpenAIApi, Configuration } from "openai-edge";
 
 // IMPORTANT! Set the runtime to edge
-// export const config = {
-// 	runtime: "edge"
-// };
+export const config = {
+	runtime: "edge"
+};
 
 const openaiConfig = new Configuration({
 	apiKey: OPENAI_API_KEY

@@ -95,7 +95,7 @@
 		{/if}
 	</div>
 
-	<div class="relative h-96 overflow-y-visible">
+	<div class="relative h-48 overflow-y-visible">
 		{#if !$currentSession || $currentSession.mode !== "edit"}
 			<Writer />
 			{#each $disappearingStore as disappearing (disappearing.id)}

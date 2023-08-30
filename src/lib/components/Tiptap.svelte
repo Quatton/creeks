@@ -97,9 +97,7 @@
 		const unsub = completion.subscribe((completion) => {
 			editor.commands.setContent(completion);
 		});
-		await complete(text).then(() => {
-			unsub();
-		});
+		complete(text);
 	}
 </script>
 
