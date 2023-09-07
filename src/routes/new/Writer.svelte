@@ -24,7 +24,8 @@
 					title: text,
 					mode: "flow",
 					// blocks: [],
-					content: ""
+					content: "",
+					tidied: false
 				};
 			}
 			return {

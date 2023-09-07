@@ -5,6 +5,7 @@ export type CreekSession = {
 	// blocks: CreekBlock[];
 	content: string;
 	mode: "flow" | "edit";
+	tidied: boolean;
 };
 
 export type CreekBlock = {

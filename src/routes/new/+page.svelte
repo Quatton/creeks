@@ -5,10 +5,11 @@
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 
 	import Writer from "./Writer.svelte";
-	import Tiptap from "$lib/components/Tiptap.svelte";
+	// import Tiptap from "$lib/components/Tiptap.svelte";
 	import { cn } from "$lib/utils/cn";
+	import { goto } from "$app/navigation";
 
-	let tiptap: Tiptap;
+	// let tiptap: Tiptap;
 
 	function toggleMode() {
 		currentSession.update((session) => {
@@ -52,16 +53,19 @@
 		type: "confirm",
 		title: "End session?",
 		body: "Are you sure you want to end this session?",
+
 		response: (response: boolean) => {
 			if (response) {
-				switch ($currentSession?.mode) {
-					case "flow":
-						toggleMode();
-						break;
-					case "edit":
-						saveAndEndSession();
-						break;
-				}
+				currentSession.update((session) => {
+					if (!session) return null;
+					return {
+						...session,
+						tidied: false
+					};
+				});
+				goto(`/notes/${$currentSession?.id}`);
+				toggleMode();
+				saveAndEndSession();
 			}
 		}
 	};
@@ -74,10 +78,10 @@
 
 <svelte:window
 	on:keydown={(e) => {
-		if (e.altKey && e.key === "w" && $currentSession) {
-			e.preventDefault();
-			toggleMode();
-		}
+		// if (e.altKey && e.key === "w" && $currentSession) {
+		// 	e.preventDefault();
+		// 	toggleMode();
+		// }
 		if (e.key === "Escape") {
 			e.preventDefault();
 			// save and end session
@@ -96,26 +100,19 @@
 	</div>
 
 	<div class="relative h-48 overflow-y-visible">
-		{#if !$currentSession || $currentSession.mode !== "edit"}
-			<Writer />
-			{#each $disappearingStore as disappearing (disappearing.id)}
-				<Disappearing setting={disappearing} className="text-3xl" />
-			{/each}
-		{:else if $currentSession.mode === "edit"}
+		<!-- {#if !$currentSession || $currentSession.mode !== "edit"} -->
+		<Writer />
+		{#each $disappearingStore as disappearing (disappearing.id)}
+			<Disappearing setting={disappearing} className="text-3xl" />
+		{/each}
+		<!-- {:else if $currentSession.mode === "edit"}
 			<div class="h-full overflow-y-auto">
 				<Tiptap note={$currentSession} bind:this={tiptap} />
 			</div>
-		{/if}
+		{/if} -->
 	</div>
 
-	<div class="space-x-1">
-		{#if $currentSession?.mode === "edit"}
-			<button class="chip variant-filled-secondary" on:click={tiptap.tidy}>
-				Alt+T | Tidy
-			</button>
-		{:else}
-			<button class="chip variant-filled"> Enter | Flush </button>
-		{/if}
+	<div class="space-x-1 flex justify-center">
 		<button
 			class="chip variant-filled-error"
 			on:click={() => {
@@ -123,9 +120,6 @@
 			}}
 		>
 			ESC | End session
-		</button>
-		<button class="chip variant-filled-primary" on:click={toggleMode}>
-			Alt+W | Toggle mode
 		</button>
 	</div>
 </section>
