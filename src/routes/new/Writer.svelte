@@ -14,7 +14,6 @@
 	 */
 
 	let text = "";
-
 	function push(text: string) {
 		currentSession.update((session) => {
 			if (!session) {
@@ -25,7 +24,8 @@
 					mode: "flow",
 					// blocks: [],
 					content: "",
-					tidied: false
+					tidied: false,
+					time: -1
 				};
 			}
 			return {
@@ -53,16 +53,20 @@
 			duration: 3000
 		});
 	}
+
+	export function pushAll() {
+		if (text.trim() === "") return;
+		push(text);
+		pushAnimate(text);
+		text = "";
+	}
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
-			if (text.trim() === "") return;
-			push(text);
-			pushAnimate(text);
-			text = "";
+			pushAll();
 		}
 	}}
 />

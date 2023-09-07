@@ -6,6 +6,7 @@ export type CreekSession = {
 	content: string;
 	mode: "flow" | "edit";
 	tidied: boolean;
+	time: number;
 };
 
 export type CreekBlock = {

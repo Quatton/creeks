@@ -9,6 +9,12 @@
 	import { cn } from "$lib/utils/cn";
 	import { goto } from "$app/navigation";
 	import { fade } from "svelte/transition";
+	import { onMount } from "svelte";
+
+	let writer: Writer;
+
+	let time = -1;
+	let timer: NodeJS.Timeout | null = null;
 
 	// let tiptap: Tiptap;
 
@@ -67,9 +73,59 @@
 				goto(`/notes/${$currentSession?.id}`);
 				toggleMode();
 				saveAndEndSession();
+			} else {
+				// update to -1
+				currentSession.update((session) => {
+					if (!session) return null;
+					return {
+						...session,
+						time: -1
+					};
+				});
 			}
 		}
 	};
+
+	$: isSession = !!$currentSession;
+	$: {
+		if (isSession && time !== -1)
+			currentSession.update((session) => {
+				if (!session) return null;
+				return {
+					...session,
+					time: time
+				};
+			});
+	}
+
+	$: {
+		// now let's time this up
+		if (isSession)
+			timer = setInterval(() => {
+				currentSession.update((session) => {
+					if (!session) return null;
+					if (session.time === 0) {
+						writer.pushAll();
+						modalStore.trigger(modal);
+					}
+					return {
+						...session,
+						time: session.time - 1
+					};
+				});
+			}, 1000);
+	}
+
+	$: {
+		if (timer && $currentSession && $currentSession.time < 0)
+			clearInterval(timer);
+	}
+
+	onMount(() => {
+		return () => {
+			if (timer) clearInterval(timer);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -102,7 +158,7 @@
 
 	<div class="relative h-72 overflow-y-visible">
 		<!-- {#if !$currentSession || $currentSession.mode !== "edit"} -->
-		<Writer />
+		<Writer bind:this={writer} />
 		{#each $disappearingStore as disappearing (disappearing.id)}
 			<Disappearing setting={disappearing} className="text-3xl" />
 		{/each}
@@ -113,18 +169,33 @@
 		{/if} -->
 	</div>
 
-	<div class="space-x-1 flex justify-center">
+	<div class="space-x-1 flex justify-center items-center">
 		{#if $currentSession}
-			<button
-				class="chip variant-filled-error"
-				in:fade={{ duration: 300 }}
-				out:fade={{ duration: 300 }}
-				on:click={() => {
-					modalStore.trigger(modal);
-				}}
-			>
-				ESC | End session
-			</button>
+			{#if $currentSession.time > 0}
+				{$currentSession.time}
+			{:else}
+				<button
+					class="chip variant-filled-error"
+					in:fade={{ duration: 300 }}
+					out:fade={{ duration: 300 }}
+					on:click={() => {
+						modalStore.trigger(modal);
+					}}
+				>
+					ESC | End session
+				</button>
+			{/if}
+		{:else}
+			<div class="w-fit items-center input-group grid-cols-[auto_auto]">
+				<label class="label p-2 variant-filled-surface" for="timer">
+					Timer
+				</label>
+				<select class="select" bind:value={time} id="timer">
+					<option value={-1} selected>(Untimed)</option>
+					<option value="10">10 s</option>
+					<option value="300">5 m</option>
+				</select>
+			</div>
 		{/if}
 	</div>
 </section>
