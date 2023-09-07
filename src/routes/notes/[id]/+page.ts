@@ -2,6 +2,8 @@ import { sessions } from "$lib/stores/core.js";
 import { error } from "@sveltejs/kit";
 import { derived } from "svelte/store";
 
+export const ssr = false;
+
 export function load({ params }) {
 	const noteId = params.id;
 
