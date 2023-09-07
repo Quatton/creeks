@@ -10,6 +10,7 @@
 	import { goto } from "$app/navigation";
 	import { fade } from "svelte/transition";
 	import { onMount } from "svelte";
+	import { format, formatDuration, secondsToHours } from "date-fns";
 
 	let writer: Writer;
 
@@ -100,7 +101,7 @@
 
 	$: {
 		// now let's time this up
-		if (isSession)
+		if (isSession && !timer)
 			timer = setInterval(() => {
 				currentSession.update((session) => {
 					if (!session) return null;
@@ -169,24 +170,34 @@
 		{/if} -->
 	</div>
 
-	<div class="space-x-1 flex justify-center items-center">
+	<div class="space-x-1 flex justify-center items-center gap-2">
 		{#if $currentSession}
-			{#if $currentSession.time > 0}
-				{$currentSession.time}
-			{:else}
-				<button
-					class="chip variant-filled-error"
-					in:fade={{ duration: 300 }}
-					out:fade={{ duration: 300 }}
-					on:click={() => {
-						modalStore.trigger(modal);
-					}}
-				>
-					ESC | End session
-				</button>
+			{#if $currentSession.time >= 0}
+				{@const hours = secondsToHours($currentSession.time)}
+				{@const minutes = $currentSession.time / 60}
+				{@const seconds = $currentSession.time % 60}
+				{@const formatted = format(
+					new Date(0, 0, 0, hours, minutes, seconds),
+					hours > 0 ? "HH:mm:ss" : "mm:ss"
+				)}
+				<span in:fade={{ duration: 300 }}>{formatted}</span>
 			{/if}
+			<button
+				class="chip variant-filled-error"
+				in:fade={{ duration: 300 }}
+				out:fade={{ duration: 300 }}
+				on:click={() => {
+					modalStore.trigger(modal);
+				}}
+			>
+				ESC | End session
+			</button>
 		{:else}
-			<div class="w-fit items-center input-group grid-cols-[auto_auto]">
+			<div
+				class="w-fit items-center input-group grid-cols-[auto_auto]"
+				in:fade={{ duration: 300 }}
+				out:fade={{ duration: 300 }}
+			>
 				<label class="label p-2 variant-filled-surface" for="timer">
 					Timer
 				</label>
