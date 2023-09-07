@@ -8,6 +8,7 @@
 	// import Tiptap from "$lib/components/Tiptap.svelte";
 	import { cn } from "$lib/utils/cn";
 	import { goto } from "$app/navigation";
+	import { fade } from "svelte/transition";
 
 	// let tiptap: Tiptap;
 
@@ -99,7 +100,7 @@
 		{/if}
 	</div>
 
-	<div class="relative h-48 overflow-y-visible">
+	<div class="relative h-72 overflow-y-visible">
 		<!-- {#if !$currentSession || $currentSession.mode !== "edit"} -->
 		<Writer />
 		{#each $disappearingStore as disappearing (disappearing.id)}
@@ -113,13 +114,17 @@
 	</div>
 
 	<div class="space-x-1 flex justify-center">
-		<button
-			class="chip variant-filled-error"
-			on:click={() => {
-				modalStore.trigger(modal);
-			}}
-		>
-			ESC | End session
-		</button>
+		{#if $currentSession}
+			<button
+				class="chip variant-filled-error"
+				in:fade={{ duration: 300 }}
+				out:fade={{ duration: 300 }}
+				on:click={() => {
+					modalStore.trigger(modal);
+				}}
+			>
+				ESC | End session
+			</button>
+		{/if}
 	</div>
 </section>
