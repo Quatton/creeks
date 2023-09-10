@@ -9,12 +9,12 @@
 	let timeout: NodeJS.Timeout;
 
 	let texts = [
-		"Imagine a notebook that you don't need to care about the structure.",
-
-		"Just keep writing.",
-		"And, writing.",
-		"Even misspeliling.",
-		"Then once you're done, everything is beautifully organized."
+		"I am procrastinating on this one task",
+		"I launched my first product today and didn't get any traction",
+		"Maybe because I am afraid of failing it",
+		"Wow, free writing really does help me find out what I am stuck on",
+		"It'd be nice if Creeks can help me tidy this messy thoughts...",
+		"Or can it...? I should try it out!"
 	];
 
 	/**
@@ -36,7 +36,11 @@
 			jndex++;
 		}, 50);
 	} else {
-		setTimeout(() => {
+		setTimeout(async () => {
+			if (index === texts.length - 1) {
+				await new Promise((resolve) => setTimeout(resolve, 2000));
+			}
+
 			flush(text);
 			text = "";
 			index = (index + 1) % texts.length;
@@ -66,9 +70,9 @@
 		>
 			Creeks
 		</h1>
-		<h2 class="h2 text-secondary-300">
-			The most zen way to keep your thoughts flowing.
-		</h2>
+		<h3 class="h2 text-secondary-300">
+			Unstuck your life with 5-minute <br class="sm:hidden" /> free-writing
+		</h3>
 		<div class="relative h-48 overflow-y-visible">
 			{#each $disappearingStore as disappearing}
 				<Disappearing

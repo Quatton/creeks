@@ -71,7 +71,9 @@
 						tidied: false
 					};
 				});
-				goto(`/notes/${$currentSession?.id}`);
+				const id = $currentSession?.id;
+				if (!id) return;
+				goto(`/notes/${id}`);
 				toggleMode();
 				saveAndEndSession();
 			} else {
