@@ -14,7 +14,7 @@
 
 	let writer: Writer;
 
-	let time = -1;
+	let time = 300;
 	let timer: NodeJS.Timeout | null = null;
 
 	// let tiptap: Tiptap;
@@ -204,9 +204,9 @@
 					Timer
 				</label>
 				<select class="select" bind:value={time} id="timer">
-					<option value={-1} selected>(Untimed)</option>
-					<option value="10">10 s</option>
-					<option value="300">5 m</option>
+					<option value={-1}>(Untimed)</option>
+					<option value={180}>3 m</option>
+					<option value={300} selected>5 m</option>
 				</select>
 			</div>
 		{/if}
