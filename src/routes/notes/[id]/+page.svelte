@@ -1,5 +1,6 @@
 <script>
 	import { goto } from "$app/navigation";
+	import Mermaid from "$lib/components/Mermaid.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
 	import { TabGroup, Tab } from "@skeletonlabs/skeleton";
 
@@ -45,7 +46,7 @@
 				{#if tabSet === 0}
 					<Tiptap note={$note} />
 				{:else if tabSet === 1}
-					(tab panel 2 contents)
+					<Mermaid note={$note} />
 				{/if}
 			</svelte:fragment>
 		</TabGroup>

@@ -17,7 +17,7 @@ module.exports = {
 		// 3. Append the Skeleton plugin to the end of this list
 		require("@skeletonlabs/tw-plugin").skeleton({
 			themes: {
-				preset: ["gold-nouveau"]
+				preset: [{ name: "gold-nouveau", enhancements: true }]
 			}
 		}),
 		require("@tailwindcss/typography"),
