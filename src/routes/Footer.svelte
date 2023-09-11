@@ -1,7 +1,6 @@
 <script>
 	import IconBookMarked from "~icons/lucide/book-marked";
 	import IconPenSquare from "~icons/lucide/pen-square";
-	import LucideUserCircle2 from "~icons/lucide/user-circle-2";
 	import { page } from "$app/stores";
 
 	const links = [
@@ -10,8 +9,8 @@
 			Icon: IconBookMarked
 		},
 		{
-			href: "/account",
-			Icon: LucideUserCircle2
+			href: "/new",
+			Icon: IconPenSquare
 		}
 	];
 </script>

@@ -9,9 +9,14 @@
 	let editor: InstanceType<typeof Editor>;
 
 	export let note: CreekSession;
+	const index = $sessions.findIndex((session) => session.id === note.id);
+	const currentNote = derived(sessions, ($sessions) => {
+		return $sessions.find((session) => session.id === note.id);
+	});
 
 	import { useCompletion } from "ai/svelte";
 	import { cn } from "$lib/utils/cn";
+	import { derived } from "svelte/store";
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
@@ -28,7 +33,8 @@
 		}
 	});
 
-	onMount(() => {
+	onMount(async () => {
+		// onMount(async () => {
 		editor = new Editor({
 			element: element,
 			editorProps: {
@@ -55,7 +61,6 @@
 			onTransaction: ({ editor }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
-				const index = $sessions.findIndex((session) => session.id === note.id);
 				if (index !== -1) {
 					sessions.update((sessions) => {
 						sessions[index].content = editor.storage.markdown.getMarkdown();
@@ -75,15 +80,24 @@
 				}
 			}
 		});
-		editor.commands.selectAll();
-		editor
-			.chain()
-			.focus(editor.state.selection.to)
-			.setTextSelection({
-				from: editor.state.selection.to,
-				to: editor.state.selection.to
-			})
-			.run();
+		// editor.commands.selectAll();
+		// editor
+		// 	.chain()
+		// 	.focus(editor.state.selection.to)
+		// 	.setTextSelection({
+		// 		from: editor.state.selection.to,
+		// 		to: editor.state.selection.to
+		// 	})
+		// 	.run();
+		if ($currentNote?.mode === "edit" && !$currentNote.tidied) {
+			editor.setEditable(false);
+			await tidy();
+			sessions.update((sessions) => {
+				sessions[index].tidied = true;
+				return sessions;
+			});
+			editor.setEditable(true);
+		}
 	});
 
 	onDestroy(() => {
@@ -92,24 +106,24 @@
 		}
 	});
 
-	function tidy() {
+	export async function tidy() {
 		const text = editor.storage.markdown.getMarkdown();
 		const unsub = completion.subscribe((completion) => {
 			editor.commands.setContent(completion);
 		});
-		complete(text).then(() => {
+		await complete(text).then(() => {
 			unsub();
 		});
 	}
 </script>
 
-<svelte:window
-	on:keydown={(e) => {
-		if (e.key === "t" && e.altKey) {
-			e.preventDefault();
-			tidy();
-		}
-	}}
-/>
+<!-- <svelte:window
+// 	on:keydown={(e) => {
+// 		if (e.key === "t" && e.altKey) {
+// 			e.preventDefault();
+// 			tidy();
+// 		}
+// 	}}
+// /> -->
 
 <div bind:this={element} />

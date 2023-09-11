@@ -14,7 +14,6 @@
 	 */
 
 	let text = "";
-
 	function push(text: string) {
 		currentSession.update((session) => {
 			if (!session) {
@@ -24,7 +23,9 @@
 					title: text,
 					mode: "flow",
 					// blocks: [],
-					content: ""
+					content: "",
+					tidied: false,
+					time: -1
 				};
 			}
 			return {
@@ -52,23 +53,27 @@
 			duration: 3000
 		});
 	}
+
+	export function pushAll() {
+		if (text.trim() === "") return;
+		push(text);
+		pushAnimate(text);
+		text = "";
+	}
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
-			if (text.trim() === "") return;
-			push(text);
-			pushAnimate(text);
-			text = "";
+			pushAll();
 		}
 	}}
 />
 
 <!-- svelte-ignore a11y-autofocus -->
 <textarea
-	class="w-full resize-none outline-none bg-transparent text-3xl z-40"
+	class="absolute inset-0 resize-none outline-none bg-transparent text-3xl z-40"
 	placeholder={$currentSession ? "Keep writing..." : "I want to write about..."}
 	bind:value={text}
 	autofocus

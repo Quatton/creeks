@@ -1,18 +1,12 @@
 <script>
 	import { goto } from "$app/navigation";
-	import { page } from "$app/stores";
 	import Tiptap from "$lib/components/Tiptap.svelte";
-	import { sessions } from "$lib/stores/core";
-	import { derived } from "svelte/store";
 
 	import IconArrowLeft from "~icons/lucide/arrow-left";
 
-	const noteId = $page.params.id;
+	export let data;
 
-	const note = derived(sessions, ($sessions) => {
-		if (!$sessions) return null;
-		return $sessions.find((session) => session.id === noteId);
-	});
+	const note = data.note;
 </script>
 
 <svelte:head>
@@ -37,11 +31,7 @@
 		</a>
 	</div>
 	<div class="px-8">
-		<h1 class="h1 mb-4">{$note?.title ?? "(Not found)"}</h1>
-		{#if $note}
-			<Tiptap note={$note} />
-		{:else}
-			<p>Sorry, we couldn't find the note you were looking for.</p>
-		{/if}
+		<h1 class="h1 mb-4">{$note?.title ?? "(Untitled)"}</h1>
+		<Tiptap note={$note} />
 	</div>
 </section>
