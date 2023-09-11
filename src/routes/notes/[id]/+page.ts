@@ -1,4 +1,4 @@
-import { sessions } from "$lib/stores/core.js";
+import { sessions } from "$lib/stores/core";
 import { error } from "@sveltejs/kit";
 import { derived } from "svelte/store";
 

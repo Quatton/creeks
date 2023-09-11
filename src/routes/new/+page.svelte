@@ -132,8 +132,8 @@
 </script>
 
 <svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
+	<title>New</title>
+	<meta name="description" content="Create a new note" />
 </svelte:head>
 
 <svelte:window
