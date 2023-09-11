@@ -11,6 +11,10 @@ export const mermaidRender = async (
 	return await mermaid.render(id, code);
 };
 
-export const parse = async (code: string): Promise<unknown> => {
-	return await mermaid.parse(code);
+export const mermaidParse = async (code: string): Promise<boolean> => {
+	return (
+		(await mermaid.parse(code, {
+			suppressErrors: true
+		})) ?? false
+	);
 };
