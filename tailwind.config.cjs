@@ -15,7 +15,11 @@ module.exports = {
 	},
 	plugins: [
 		// 3. Append the Skeleton plugin to the end of this list
-		...require("@skeletonlabs/skeleton/tailwind/skeleton.cjs")(),
+		require("@skeletonlabs/tw-plugin").skeleton({
+			themes: {
+				preset: ["gold-nouveau"]
+			}
+		}),
 		require("@tailwindcss/typography"),
 		require("@tailwindcss/forms")({
 			strategy: "class"

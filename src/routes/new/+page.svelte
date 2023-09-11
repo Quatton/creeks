@@ -2,7 +2,9 @@
 	import Disappearing from "$lib/components/Disappearing.svelte";
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+
+	const modalStore = getModalStore();
 
 	import Writer from "./Writer.svelte";
 	// import Tiptap from "$lib/components/Tiptap.svelte";
@@ -37,12 +39,31 @@
 				(session) => session.id === $currentSession?.id
 			);
 
-			if (!session) return [...sessions, $currentSession];
+			if (!session)
+				return [
+					...sessions,
+					{
+						title: $currentSession.title,
+						content: $currentSession.content,
+						createdAt: $currentSession.createdAt,
+						id: $currentSession.id,
+						mermaid: "",
+						tidied: false
+					}
+				];
 
 			// if it exists, update it
 			return sessions.map((session) => {
 				if (session.id === $currentSession?.id) {
-					return $currentSession;
+					return {
+						...session,
+						title: $currentSession.title,
+						content: $currentSession.content,
+						createdAt: $currentSession.createdAt,
+						id: $currentSession.id,
+						mermaid: "",
+						tidied: false
+					};
 				}
 				return session;
 			});
@@ -51,8 +72,7 @@
 		currentSession.update((session) => {
 			if (!session) return null;
 			return {
-				...session,
-				done: true
+				...session
 			};
 		});
 	}
