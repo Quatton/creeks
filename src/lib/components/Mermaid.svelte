@@ -5,7 +5,7 @@
 	import { modeCurrent } from "@skeletonlabs/skeleton";
 	import { useCompletion } from "ai/svelte";
 	import { onMount } from "svelte";
-	import { derived } from "svelte/store";
+	import { derived, type Unsubscriber } from "svelte/store";
 	export let note: CreekNote;
 
 	const index = $sessions.findIndex((session) => session.id === note.id);
@@ -13,32 +13,40 @@
 		return $sessions[index];
 	});
 
+	let unsub: Unsubscriber = () => {};
+
 	const { completion, complete } = useCompletion({
 		api: "/api/mermaid"
 	});
 
 	onMount(() => {
 		if ($currentNote.mermaid === "") {
-			const unsub = completion.subscribe((completion) => {
-				sessions.update((sessions) => {
-					if (index === -1) return sessions;
-					sessions[index] = {
-						...sessions[index],
-						mermaid: completion
-					};
-
-					return sessions;
-				});
-			});
-
-			complete(`TITLE: ${$currentNote.title}
-			CONTENT: ${$currentNote.content}
-			`).then(() => {
-				unsub();
-			});
+			genFlowchart();
 		}
 	});
 
+	function genFlowchart() {
+		unsub();
+		unsub = completion.subscribe((completion) => {
+			const result = completion.replace(/`/g, "");
+
+			sessions.update((sessions) => {
+				if (index === -1) return sessions;
+				sessions[index] = {
+					...sessions[index],
+					mermaid: result
+				};
+
+				return sessions;
+			});
+		});
+
+		complete(`TITLE: ${$currentNote.title}
+			CONTENT: ${$currentNote.content}
+			`).then(() => {
+			unsub();
+		});
+	}
 	$: {
 		mermaidParse($currentNote.mermaid).then((t) => {
 			if (t)
@@ -56,5 +64,13 @@
 		});
 	}
 </script>
+
+<svelte:window
+	on:keydown={(event) => {
+		if (event.altKey && event.key === "r") {
+			genFlowchart();
+		}
+	}}
+/>
 
 <div id="mermaid" />

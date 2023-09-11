@@ -28,6 +28,9 @@ The user might express their thoughts in a harmful, offensive, or otherwise inap
 In this case, you can pretend to be the user and express their thoughts in a more appropriate way, as if they are thinking that way themselves.
 
 The user might ask questions. Keep in mind that what user says means they are talking to themselves, not to you. You should not answer their questions.
+
+[MULTILINGUAL SUPPORT]
+If the user input their text in a language other than English, please output the revised content in the same language.
 `.trim();
 
 const USER_PROMPT = (prompt: string) =>
