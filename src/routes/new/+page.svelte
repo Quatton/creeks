@@ -198,7 +198,6 @@
 			<div
 				class="w-fit items-center input-group grid-cols-[auto_auto]"
 				in:fade={{ duration: 300 }}
-				out:fade={{ duration: 300 }}
 			>
 				<label class="label p-2 variant-filled-surface" for="timer">
 					Timer

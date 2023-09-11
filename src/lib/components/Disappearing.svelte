@@ -13,7 +13,7 @@
 </script>
 
 <div
-	class={cn("absolute inset-0 select-none z-20", className)}
+	class={cn("absolute inset-0 select-none z-40", className)}
 	out:fly={{
 		y: -100,
 		duration: setting.duration || 3000,

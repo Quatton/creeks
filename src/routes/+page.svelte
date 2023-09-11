@@ -11,8 +11,11 @@
 	let texts = [
 		"I am procrastinating on this one task",
 		"I launched my first product today and didn't get any traction",
-		"Maybe because I am afraid of failing it",
-		"Wow, free writing really does help me find out what I am stuck on",
+		"Maybe now I am afraid of failing it",
+		"That's why I am procrastinating on it",
+		"Today, I will learn about the social media algorithm",
+		"And maybe give it another try",
+		"Wow, free writing really does help me find what I am stuck on",
 		"It'd be nice if Creeks can help me tidy this messy thoughts...",
 		"Or can it...? I should try it out!"
 	];
@@ -70,10 +73,10 @@
 		>
 			Creeks
 		</h1>
-		<h3 class="h2 text-secondary-300">
+		<h3 class="h2 text-secondary-400-500-token">
 			Unstuck your life with 5-minute <br class="sm:hidden" /> free-writing
 		</h3>
-		<div class="relative h-48 overflow-y-visible">
+		<div class="mt-12 relative h-24 overflow-y-visible">
 			{#each $disappearingStore as disappearing}
 				<Disappearing
 					setting={disappearing}
