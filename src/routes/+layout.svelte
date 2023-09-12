@@ -1,10 +1,6 @@
 <script>
 	// import "../theme.postcss";
 
-	import "@skeletonlabs/skeleton/styles/skeleton.css";
-
-	import "@skeletonlabs/skeleton/themes/theme-gold-nouveau.css";
-
 	import "../app.postcss";
 	import Header from "./Header.svelte";
 	import Footer from "./Footer.svelte";
@@ -42,6 +38,10 @@
 
 		return () => subscription.unsubscribe();
 	});
+
+	import { initializeStores } from "@skeletonlabs/skeleton";
+
+	initializeStores();
 </script>
 
 <Modal />

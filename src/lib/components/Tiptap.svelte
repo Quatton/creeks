@@ -2,13 +2,13 @@
 	import { onMount, onDestroy } from "svelte";
 	import { Editor } from "@tiptap/core";
 	import StarterKit from "@tiptap/starter-kit";
-	import type { CreekSession } from "$lib/types/core";
+	import type { CreekNote } from "$lib/types/core";
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { Markdown } from "tiptap-markdown";
 	let element: HTMLDivElement;
 	let editor: InstanceType<typeof Editor>;
 
-	export let note: CreekSession;
+	export let note: CreekNote;
 	const index = $sessions.findIndex((session) => session.id === note.id);
 	const currentNote = derived(sessions, ($sessions) => {
 		return $sessions.find((session) => session.id === note.id);
@@ -34,6 +34,23 @@
 	});
 
 	onMount(async () => {
+		// convert
+
+		// sessions.update((sessions) => {
+		// 	return sessions.map((note) => {
+		// 		const creekNote: CreekNote = {
+		// 			content: note.content,
+		// 			createdAt: note.createdAt,
+		// 			id: note.id,
+		// 			mermaid: note.mermaid ?? "",
+		// 			title: note.title,
+		// 			tidied: note.tidied ?? false
+		// 		};
+
+		// 		return creekNote;
+		// 	});
+		// });
+
 		// onMount(async () => {
 		editor = new Editor({
 			element: element,
@@ -89,7 +106,7 @@
 		// 		to: editor.state.selection.to
 		// 	})
 		// 	.run();
-		if ($currentNote?.mode === "edit" && !$currentNote.tidied) {
+		if (!$currentNote?.tidied) {
 			editor.setEditable(false);
 			await tidy();
 			sessions.update((sessions) => {

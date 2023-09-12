@@ -9,15 +9,9 @@
 	let timeout: NodeJS.Timeout;
 
 	let texts = [
-		"I am procrastinating on this one task",
-		"I launched my first product today and didn't get any traction",
-		"Maybe now I am afraid of failing it",
-		"That's why I am procrastinating on it",
-		"Today, I will learn about the social media algorithm",
-		"And maybe give it another try",
-		"Wow, free writing really does help me find what I am stuck on",
-		"It'd be nice if Creeks can help me tidy this messy thoughts...",
-		"Or can it...? I should try it out!"
+		"Unclog your mind and let your thoughts flow.",
+		"Keep writing and don't hesitate for even a second.",
+		"We'll take care of the rest."
 	];
 
 	/**

@@ -1,12 +1,16 @@
 <script>
 	import { goto } from "$app/navigation";
+	import Mermaid from "$lib/components/Mermaid.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
+	import { TabGroup, Tab } from "@skeletonlabs/skeleton";
 
 	import IconArrowLeft from "~icons/lucide/arrow-left";
 
 	export let data;
 
 	const note = data.note;
+
+	let tabSet = 0;
 </script>
 
 <svelte:head>
@@ -24,14 +28,29 @@
 	}}
 />
 
-<section class="container self-start p-12">
+<section class="container self-stretch md:p-12 flex flex-col">
 	<div>
 		<a href="/notes" class="btn btn-icon">
 			<IconArrowLeft />
 		</a>
 	</div>
-	<div class="px-8">
+	<div
+		class="px-8 grow flex flex-col [&_>_.tab-group]:grow [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col"
+	>
 		<h1 class="h1 mb-4">{$note?.title ?? "(Untitled)"}</h1>
-		<Tiptap note={$note} />
+		<TabGroup regionPanel="grow">
+			<Tab bind:group={tabSet} name="tab1" value={0}>
+				<span>Note</span>
+			</Tab>
+			<Tab bind:group={tabSet} name="tab2" value={1}>Flowchart (Beta)</Tab>
+			<!-- Tab Panels --->
+			<svelte:fragment slot="panel">
+				{#if tabSet === 0}
+					<Tiptap note={$note} />
+				{:else if tabSet === 1}
+					<Mermaid note={$note} />
+				{/if}
+			</svelte:fragment>
+		</TabGroup>
 	</div>
 </section>
