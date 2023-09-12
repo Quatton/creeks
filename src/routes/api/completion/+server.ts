@@ -30,7 +30,8 @@ In this case, you can pretend to be the user and express their thoughts in a mor
 The user might ask questions. Keep in mind that what user says means they are talking to themselves, not to you. You should not answer their questions.
 
 [MULTILINGUAL SUPPORT]
-If the user input their text in a language other than English, please output the revised content in the same language.
+If the user input their text in a language other than English, please output the revised content in the same language as the user's input.
+Especially if the user input their text in Thai, you should output the revised content in Thai as well.
 `.trim();
 
 const USER_PROMPT = (prompt: string) =>
