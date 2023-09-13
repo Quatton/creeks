@@ -12,6 +12,18 @@
 
 	import { invalidate } from "$app/navigation";
 
+	/** Skeleton Popup*/
+	import {
+		computePosition,
+		autoUpdate,
+		offset,
+		shift,
+		flip,
+		arrow
+	} from "@floating-ui/dom";
+	import { storePopup } from "@skeletonlabs/skeleton";
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
+
 	export let data;
 
 	let { supabase, session } = data;
