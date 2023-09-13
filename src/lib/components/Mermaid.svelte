@@ -84,4 +84,7 @@
 	}}
 />
 
-<div bind:this={mermaid} class="h-full [&_>_#graph-div]:h-full" />
+<div
+	bind:this={mermaid}
+	class="h-full w-full [&_>_#graph-div]:h-full [&_>_#graph-div]:w-full"
+/>
