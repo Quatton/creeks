@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sessions } from "$lib/stores/core";
+	import { getNoteStore, sessions } from "$lib/stores/core";
 	import type { CreekNote } from "$lib/types/core";
 	import { mermaidParse, mermaidRender } from "$lib/utils/mermaid";
 	import {
@@ -11,24 +11,20 @@
 	} from "@skeletonlabs/skeleton";
 	import { useCompletion } from "ai/svelte";
 	import { onMount } from "svelte";
-	import { derived, type Unsubscriber } from "svelte/store";
 	import panzoom from "svg-pan-zoom";
 	import MermaidModal from "./MermaidModal.svelte";
+	import { get, type Unsubscriber } from "svelte/store";
 	export let note: CreekNote;
 
-	const index = $sessions.findIndex((session) => session.id === note.id);
-	const currentNote = derived(sessions, ($sessions) => {
-		return $sessions[index];
-	});
+	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
-	const { completion, complete } = useCompletion({
+	const { completion, complete, stop } = useCompletion({
 		api: "/api/mermaid"
 	});
 
 	let mermaid: HTMLDivElement;
-	// let pzoom: typeof panzoom | undefined;
-	let initPanzoom = false;
+	let pzoom: typeof panzoom | undefined;
 
 	let nodes: NodeListOf<SVGElement>;
 	let edges: NodeListOf<SVGElement>;
@@ -46,19 +42,9 @@
 	});
 
 	function genFlowchart() {
-		unsub();
 		unsub = completion.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
-
-			sessions.update((sessions) => {
-				if (index === -1) return sessions;
-				sessions[index] = {
-					...sessions[index],
-					mermaid: result
-				};
-
-				return sessions;
-			});
+			$currentNote.mermaid = result;
 		});
 
 		complete(`TITLE: ${$currentNote.title}
@@ -68,29 +54,63 @@
 		});
 	}
 
+	$: code = $currentNote.mermaid;
 	$: {
-		mermaidParse($currentNote.mermaid).then(async (t) => {
+		mermaidParse(code).then(async (t) => {
 			if (t) {
 				const { svg } = await mermaidRender(
 					{
 						darkMode: !$modeCurrent
 					},
-					$currentNote.mermaid,
+					code,
 					"graph-div"
 				);
+				setupPanzoom();
 				mermaid.innerHTML = svg;
-				if (!initPanzoom) {
-					panzoom("#graph-div", {
-						fit: true,
-						center: true,
-						controlIconsEnabled: true,
-						zoomScaleSensitivity: 0.2
-					});
-				}
 				bindClicks();
 			}
 		});
 	}
+
+	const setupPanzoom = () => {
+		pzoom?.destroy();
+		pzoom = undefined;
+
+		void Promise.resolve().then(() => {
+			const { pan, zoom } = get(currentNote).mermaidConfig ?? {
+				pan: undefined,
+				zoom: undefined
+			};
+			console.log("it was", pan, zoom);
+			pzoom = panzoom("#graph-div", {
+				fit: true,
+				center: true,
+				beforePan: handlePanZoomChange,
+				beforeZoom: handlePanZoomChange,
+				controlIconsEnabled: true,
+				zoomScaleSensitivity: 0.2
+			});
+			if (!!pan && !!zoom && Number.isFinite(zoom)) {
+				pzoom.zoom(zoom);
+				pzoom.pan(pan);
+
+				console.log("correct?", pzoom.getPan(), pzoom.getZoom());
+			}
+		});
+	};
+
+	const handlePanZoomChange = () => {
+		if (!pzoom) {
+			return;
+		}
+		const pan = pzoom.getPan();
+		const zoom = pzoom.getZoom();
+
+		$currentNote.mermaidConfig = {
+			pan,
+			zoom
+		};
+	};
 
 	function bindClicks() {
 		nodes = document.querySelectorAll("g.node");
@@ -119,7 +139,8 @@
 		return {
 			ref: MermaidModal,
 			props: {
-				node
+				node,
+				noteId: $currentNote.id
 			}
 		};
 	};
@@ -136,6 +157,11 @@
 	on:keydown={(event) => {
 		if (event.altKey && event.key === "r") {
 			genFlowchart();
+		}
+	}}
+	on:resize={() => {
+		if (pzoom) {
+			pzoom.resize();
 		}
 	}}
 />

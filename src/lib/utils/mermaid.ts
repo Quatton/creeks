@@ -18,3 +18,22 @@ export const mermaidParse = async (code: string): Promise<boolean> => {
 		})) ?? false
 	);
 };
+
+export const updateMermaidNode = (
+	code: string,
+	update: {
+		id: string;
+		label: string;
+	}
+) => {
+	// it's in the form of
+	// nodeId("label")
+	// 1. we find that nodeId
+	// 2. we replace the label
+	// 3. profit
+	const nodeId = update.id;
+	const label = update.label;
+	const regex = new RegExp(`${nodeId}\\(".*"\\)`);
+	const newCode = code.replace(regex, `${nodeId}("${label}")`);
+	return newCode;
+};
