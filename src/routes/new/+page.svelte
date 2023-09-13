@@ -4,6 +4,8 @@
 	import { disappearingStore } from "$lib/stores/disappearing";
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 
+	import LucideTrash2 from "~icons/lucide/trash-2";
+
 	const modalStore = getModalStore();
 
 	import Writer from "./Writer.svelte";
@@ -109,9 +111,22 @@
 		}
 	};
 
+	const discardModal: ModalSettings = {
+		type: "confirm",
+		title: "Discard session?",
+		body: "Are you sure you want to discard this session?",
+
+		response: (response: boolean) => {
+			if (response) {
+				currentSession.set(null);
+			}
+		}
+	};
+
 	$: isSession = !!$currentSession;
+	$: notEmpty = !!$currentSession?.content.trim();
 	$: {
-		if (isSession && time !== -1)
+		if (isSession && !notEmpty && time !== -1)
 			currentSession.update((session) => {
 				if (!session) return null;
 				return {
@@ -194,6 +209,14 @@
 
 	<div class="space-x-1 flex justify-center items-center gap-2">
 		{#if $currentSession}
+			<button
+				class="btn-icon-sm flex items-center justify-center"
+				on:click={() => {
+					modalStore.trigger(discardModal);
+				}}
+			>
+				<LucideTrash2 class="w-4 h-4" />
+			</button>
 			{#if $currentSession.time >= 0}
 				{@const hours = secondsToHours($currentSession.time)}
 				{@const minutes = $currentSession.time / 60}
@@ -207,7 +230,6 @@
 			<button
 				class="chip variant-filled-error"
 				in:fade={{ duration: 300 }}
-				out:fade={{ duration: 300 }}
 				on:click={() => {
 					modalStore.trigger(modal);
 				}}
