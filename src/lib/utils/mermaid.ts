@@ -37,3 +37,28 @@ export const updateMermaidNode = (
 	const newCode = code.replace(regex, `${nodeId}("${label}")`);
 	return newCode;
 };
+
+export const nodeIdExists = (code: string, id: string) => {
+	const regex = new RegExp(`${id}\\(".*"\\)`);
+	return regex.test(code);
+};
+
+export const generateNodeId = (code: string): string => {
+	const number = Math.floor(Math.random() * 10000);
+	const id = `node${number}`;
+
+	if (nodeIdExists(code, id)) {
+		return generateNodeId(code);
+	}
+
+	return id;
+};
+
+export const addNewNode = (code: string, fromId: string): string => {
+	if (!nodeIdExists(code, fromId)) {
+		throw new Error("Node does not exist");
+	}
+	const id = generateNodeId(code);
+	const newCode = `${code}\n\t${fromId} --> ${id}("...")`;
+	return newCode;
+};

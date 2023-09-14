@@ -78,7 +78,7 @@
 				/>
 			{/each}
 			<textarea
-				class="text-primary-400-500-token w-full resize-none outline-none bg-transparent text-3xl z-40 h-full"
+				class="p-0 text-primary-400-500-token w-full resize-none outline-none border-none bg-transparent text-3xl z-40 h-full"
 				bind:value={text}
 				disabled
 			/>

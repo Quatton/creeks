@@ -73,7 +73,7 @@
 
 <!-- svelte-ignore a11y-autofocus -->
 <textarea
-	class="absolute inset-0 resize-none outline-none bg-transparent text-3xl z-40"
+	class="p-0 absolute inset-0 resize-none outline-none focus:ring-0 border-none bg-transparent text-3xl z-40"
 	placeholder={$currentSession ? "Keep writing..." : "I want to write about..."}
 	bind:value={text}
 	autofocus
