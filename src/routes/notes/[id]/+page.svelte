@@ -40,7 +40,7 @@
 		<div class="px-4">
 			<h1 class="h1 mb-4">{$note?.title ?? "(Untitled)"}</h1>
 		</div>
-		<TabGroup regionPanel="grow">
+		<TabGroup regionPanel="grow flex flex-col">
 			<Tab bind:group={tabSet} name="tab1" value={0}>
 				<span>Note</span>
 			</Tab>

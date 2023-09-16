@@ -16,6 +16,8 @@
 	import { get, type Unsubscriber } from "svelte/store";
 	export let note: CreekNote;
 
+	import LucideAxis3d from "~icons/lucide/axis-3d";
+
 	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
@@ -81,7 +83,6 @@
 				pan: undefined,
 				zoom: undefined
 			};
-			console.log("it was", pan, zoom);
 			pzoom = panzoom("#graph-div", {
 				fit: true,
 				center: true,
@@ -166,7 +167,27 @@
 	}}
 />
 
-<div
-	bind:this={mermaid}
-	class="h-full w-full [&_>_#graph-div]:h-full [&_>_#graph-div]:w-full"
-/>
+<div class="relative grow">
+	<div
+		bind:this={mermaid}
+		class="h-full w-full [&_>_#graph-div]:h-full [&_>_#graph-div]:w-full"
+	/>
+
+	<button
+		class="btn-icon"
+		on:click={() => {
+			// graph the first line of mermaid
+			const firstLine = $currentNote.mermaid.split("\n")[0];
+
+			// change TD to LR and vice versa
+			const newLine = firstLine.includes("TD")
+				? firstLine.replace("TD", "LR")
+				: firstLine.replace("LR", "TD");
+
+			$currentNote.mermaid =
+				newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
+		}}
+	>
+		<LucideAxis3d class="w-6 h-6" />
+	</button>
+</div>
