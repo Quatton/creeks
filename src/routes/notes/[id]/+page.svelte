@@ -35,9 +35,11 @@
 		</a>
 	</div>
 	<div
-		class="px-8 grow flex flex-col [&_>_.tab-group]:grow [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col"
+		class="sm:px-8 grow flex flex-col [&_>_.tab-group]:grow [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col"
 	>
-		<h1 class="h1 mb-4">{$note?.title ?? "(Untitled)"}</h1>
+		<div class="px-4">
+			<h1 class="h1 mb-4">{$note?.title ?? "(Untitled)"}</h1>
+		</div>
 		<TabGroup regionPanel="grow">
 			<Tab bind:group={tabSet} name="tab1" value={0}>
 				<span>Note</span>
@@ -46,7 +48,9 @@
 			<!-- Tab Panels --->
 			<svelte:fragment slot="panel">
 				{#if tabSet === 0}
-					<Tiptap note={$note} />
+					<div class="p-4">
+						<Tiptap note={$note} />
+					</div>
 				{:else if tabSet === 1}
 					<Mermaid note={$note} />
 				{/if}
