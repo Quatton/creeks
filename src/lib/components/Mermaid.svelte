@@ -17,11 +17,12 @@
 	export let note: CreekNote;
 
 	import LucideAxis3d from "~icons/lucide/axis-3d";
+	import LucideLoader2 from "~icons/lucide/loader-2";
 
 	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
-	const { completion, complete, stop } = useCompletion({
+	const { completion, complete, stop, isLoading } = useCompletion({
 		api: "/api/mermaid"
 	});
 
@@ -94,8 +95,6 @@
 			if (!!pan && !!zoom && Number.isFinite(zoom)) {
 				pzoom.zoom(zoom);
 				pzoom.pan(pan);
-
-				console.log("correct?", pzoom.getPan(), pzoom.getZoom());
 			}
 		});
 	};
@@ -167,27 +166,31 @@
 	}}
 />
 
-<div class="relative grow">
-	<div
-		bind:this={mermaid}
-		class="h-full w-full [&_>_#graph-div]:h-full [&_>_#graph-div]:w-full"
-	/>
+<div class="relative grow flex flex-col">
+	<div bind:this={mermaid} class="grow [&_>_#graph-div]:h-full overflow-auto" />
 
-	<button
-		class="btn-icon"
-		on:click={() => {
-			// graph the first line of mermaid
-			const firstLine = $currentNote.mermaid.split("\n")[0];
+	<div class="flex gap-2 items-center">
+		<button
+			class="btn-icon"
+			on:click={() => {
+				// graph the first line of mermaid
+				const firstLine = $currentNote.mermaid.split("\n")[0];
 
-			// change TD to LR and vice versa
-			const newLine = firstLine.includes("TD")
-				? firstLine.replace("TD", "LR")
-				: firstLine.replace("LR", "TD");
+				// change TD to LR and vice versa
+				const newLine = firstLine.includes("TD")
+					? firstLine.replace("TD", "LR")
+					: firstLine.replace("LR", "TD");
 
-			$currentNote.mermaid =
-				newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
-		}}
-	>
-		<LucideAxis3d class="w-6 h-6" />
-	</button>
+				$currentNote.mermaid =
+					newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
+			}}
+		>
+			<LucideAxis3d class="w-6 h-6" />
+		</button>
+
+		{#if isLoading}
+			<LucideLoader2 class="w-6 h-6 animate-spin" />
+			<span>Generating...</span>
+		{/if}
+	</div>
 </div>
