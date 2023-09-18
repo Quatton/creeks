@@ -44,17 +44,19 @@
 		};
 	});
 
-	function genFlowchart() {
+	async function genFlowchart() {
 		unsub = completion.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
 			$currentNote.mermaid = result;
 		});
 
-		complete(`TITLE: ${$currentNote.title}
+		await complete(`TITLE: ${$currentNote.title}
 			CONTENT: ${$currentNote.content}
 			`).then(() => {
 			unsub();
 		});
+
+		$isLoading = false;
 	}
 
 	$: code = $currentNote.mermaid;

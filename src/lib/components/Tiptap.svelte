@@ -18,23 +18,33 @@
 	import { cn } from "$lib/utils/cn";
 	import { derived } from "svelte/store";
 	import LucideSparkles from "~icons/lucide/sparkles";
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings
+	} from "@skeletonlabs/skeleton";
+	import TidyModal from "./TidyModal.svelte";
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
 		onFinish: (_, completion) => {
-			const inside = completion.match(/\`\`\`(.*)\n([\s\S]*)\n\`\`\`/);
-
-			// set content to inside instead
-
-			if (inside) {
-				editor.commands.setContent(inside[2]);
-			} else {
-				editor.commands.setContent(completion);
-			}
+			editor.commands.setContent(completion);
 		}
 	});
 
-	onMount(async () => {
+	const modalStore = getModalStore();
+	const modal: ModalSettings = {
+		title: "Tidy",
+		type: "component",
+		component: {
+			ref: TidyModal
+		},
+		response: (instruction: string | boolean) => {
+			if (typeof instruction === "string") tidy(instruction);
+		}
+	};
+
+	onMount(() => {
 		// convert
 
 		// sessions.update((sessions) => {
@@ -53,6 +63,11 @@
 		// });
 
 		// onMount(async () => {
+
+		const unsub = completion.subscribe((completion) => {
+			if (completion.length > 0) editor.commands.setContent(completion);
+		});
+
 		editor = new Editor({
 			element: element,
 			editorProps: {
@@ -107,23 +122,24 @@
 		// 		to: editor.state.selection.to
 		// 	})
 		// 	.run();
-	});
 
-	onDestroy(() => {
-		if (editor) {
-			editor.destroy();
-		}
+		return () => {
+			unsub();
+			if (editor) {
+				editor.destroy();
+			}
+		};
 	});
-
-	export async function tidy() {
+	export async function tidy(instruction: string) {
 		editor.setEditable(false);
 		const text = editor.storage.markdown.getMarkdown();
-		const unsub = completion.subscribe((completion) => {
-			editor.commands.setContent(completion);
-		});
-		await complete(text).then(() => {
-			unsub();
-		});
+
+		const textWithInstruction = `[ORIGINAL TEXT]
+${text}
+
+[REVISE WITH ADDITIONAL INSTRUCTION]
+${instruction}`;
+		await complete(textWithInstruction);
 		sessions.update((sessions) => {
 			sessions[index].tidied = true;
 			return sessions;
@@ -145,8 +161,8 @@
 	<div class="flex gap-2">
 		<button
 			class="btn btn-sm variant-ghost"
-			on:click={async () => {
-				await tidy();
+			on:click={() => {
+				modalStore.trigger(modal);
 			}}
 		>
 			<span>

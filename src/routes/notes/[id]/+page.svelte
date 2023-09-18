@@ -18,30 +18,17 @@
 	<meta name="description" content="Your saved notes" />
 </svelte:head>
 
-<svelte:window
-	on:keydown={(e) => {
-		if (e.key === "Escape") {
-			goto("/notes", {
-				replaceState: true
-			});
-		}
-	}}
-/>
-
 <section class="container self-stretch md:p-12 flex flex-col">
+	<div class="flex items-center mb-4 gap-4">
+		<a href="/notes" class="btn-icon-lg">
+			<IconArrowLeft />
+		</a>
+		<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
+	</div>
 	<div
-		class="h-full sm:px-8 grow flex flex-col [&_>_.tab-group]:h-full [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col"
+		class="h-full sm:px-8 grow flex flex-col overflow-hidden [&_>_.tab-group]:h-full [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col [&_>_.tab-group]:space-y-0 [&_>_.tab-group]:gap-2"
 	>
-		<div class="flex items-center mb-4">
-			<a href="/notes" class="btn-icon">
-				<IconArrowLeft />
-			</a>
-			<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
-		</div>
-		<TabGroup
-			regionPanel="grow flex flex-col overflow-hidden"
-			regionList="shrink-0"
-		>
+		<TabGroup regionPanel="grow min-h-0 flex flex-col" regionList="shrink-0">
 			<Tab bind:group={tabSet} name="tab1" value={0}>
 				<span>Note</span>
 			</Tab>
