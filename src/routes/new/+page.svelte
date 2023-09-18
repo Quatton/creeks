@@ -207,7 +207,7 @@
 		{/if} -->
 	</div>
 
-	<div class="space-x-1 flex justify-center items-center gap-2">
+	<section class="space-x-1 flex justify-center items-center gap-2">
 		{#if $currentSession}
 			<button
 				class="btn-icon-sm flex items-center justify-center"
@@ -251,5 +251,5 @@
 				</select>
 			</div>
 		{/if}
-	</div>
+	</section>
 </section>

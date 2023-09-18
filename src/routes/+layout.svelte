@@ -57,7 +57,9 @@
 </script>
 
 <Modal />
-<AppShell slotPageContent="grid place-items-center">
+<AppShell
+	slotPageContent="flex items-center justify-center overflow-hidden shrink-1"
+>
 	<svelte:fragment slot="header">
 		<Header />
 	</svelte:fragment>

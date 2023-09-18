@@ -17,6 +17,7 @@
 	import { useCompletion } from "ai/svelte";
 	import { cn } from "$lib/utils/cn";
 	import { derived } from "svelte/store";
+	import LucideSparkles from "~icons/lucide/sparkles";
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
@@ -106,15 +107,6 @@
 		// 		to: editor.state.selection.to
 		// 	})
 		// 	.run();
-		if (!$currentNote?.tidied) {
-			editor.setEditable(false);
-			await tidy();
-			sessions.update((sessions) => {
-				sessions[index].tidied = true;
-				return sessions;
-			});
-			editor.setEditable(true);
-		}
 	});
 
 	onDestroy(() => {
@@ -124,6 +116,7 @@
 	});
 
 	export async function tidy() {
+		editor.setEditable(false);
 		const text = editor.storage.markdown.getMarkdown();
 		const unsub = completion.subscribe((completion) => {
 			editor.commands.setContent(completion);
@@ -131,6 +124,11 @@
 		await complete(text).then(() => {
 			unsub();
 		});
+		sessions.update((sessions) => {
+			sessions[index].tidied = true;
+			return sessions;
+		});
+		editor.setEditable(true);
 	}
 </script>
 
@@ -143,4 +141,21 @@
 // 	}}
 // /> -->
 
-<div bind:this={element} />
+<div class="flex flex-col h-full gap-2">
+	<div class="flex gap-2">
+		<button
+			class="btn btn-sm variant-ghost"
+			on:click={async () => {
+				await tidy();
+			}}
+		>
+			<span>
+				<LucideSparkles class="w-4 h-4" />
+			</span>
+			<span>Tidy</span>
+		</button>
+	</div>
+	<div class="overflow-y-auto">
+		<div bind:this={element} />
+	</div>
+</div>

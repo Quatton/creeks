@@ -2,11 +2,16 @@
 	import Disappearing from "$lib/components/Disappearing.svelte";
 	import { disappearingStore } from "$lib/stores/disappearing";
 	import { onMount } from "svelte";
+	import type { PageData } from "./$types";
 
 	let text = "";
 	let index = 0;
 	let jndex = 0;
 	let timeout: NodeJS.Timeout;
+
+	export let data: PageData;
+	let { supabase, session } = data;
+	$: ({ supabase } = data);
 
 	let texts = [
 		"Unclog your mind and let your thoughts flow.",
@@ -83,8 +88,13 @@
 				disabled
 			/>
 		</div>
-		<div class="flex justify-center">
-			<a href="/new" class="btn variant-filled-primary">Try it out</a>
+		<div class="flex justify-center items-center gap-2">
+			{#if !session}
+				<a href="/new" class="btn variant-filled-primary">Try it out</a>
+				<a href="/signin" class="btn variant-filled-secondary">Sign in</a>
+			{:else}
+				<a href="/new" class="btn variant-filled-primary">New creek</a>
+			{/if}
 		</div>
 	</article>
 </section>

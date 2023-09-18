@@ -8,10 +8,20 @@
 
 	const auth = supabase.auth;
 
+	const handleGoogleSignIn = async () => {
+		await auth.signInWithOAuth({
+			provider: "google",
+			options: {
+				redirectTo: $page.url.origin + "/auth/callback"
+			}
+		});
+	};
+
 	const handleSignOut = async () => {
 		await auth.signOut();
 	};
 </script>
 
-<h1>Welcome, {session.user.user_metadata.name}</h1>
-<button class="btn variant-soft" on:click={handleSignOut}> Sign out </button>
+<button class="btn variant-filled" on:click={handleGoogleSignIn}>
+	Sign in with Google
+</button>

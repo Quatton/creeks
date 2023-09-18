@@ -30,7 +30,7 @@ You will do this by starting from the root node (goal) and helping the user to i
 [EXAMPLE]
 graph TD
 	goal("I want to lose weight") -->|"But..."| o1("I don't have time to exercise")
-	o1 -->|"To solve this I should..."| a1("Spare 30 minutes earlier to exercise")
+	o1 -->|"To solve this"| a1("Spare 30 minutes earlier to exercise")
 	o1 -->|"Suggested✨"| a2("Try to track calories")
 	subgraph tracking_calories
 		direction LR
@@ -38,7 +38,7 @@ graph TD
 		a2 --> a2_a2("Set a daily calorie goal")
 		a2 --> a2_a3("Track your calories")
 	end
-	goal --> s1("I lost 5kg last month")
+	goal -->|"Successfully"| s1("I lost 5kg last month")
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.
