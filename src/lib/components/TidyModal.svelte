@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getModalStore } from "@skeletonlabs/skeleton";
 
+	export let parent: any;
 	let instruction = `Language: English
 Audience: Private note for myself
 

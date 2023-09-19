@@ -137,7 +137,7 @@
 		const textWithInstruction = `[ORIGINAL TEXT]
 ${text}
 
-[REVISE WITH ADDITIONAL INSTRUCTION]
+[REVISE WITH ADDITIONAL INSTRUCTION (OVERRIDE ORIGINAL INSTRUCTION)]
 ${instruction}`;
 		await complete(textWithInstruction);
 		sessions.update((sessions) => {
@@ -157,7 +157,7 @@ ${instruction}`;
 // 	}}
 // /> -->
 
-<div class="flex flex-col h-full gap-2">
+<div class="flex flex-col h-full gap-2 p-4">
 	<div class="flex gap-2">
 		<button
 			class="btn btn-sm variant-ghost"

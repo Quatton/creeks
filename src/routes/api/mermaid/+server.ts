@@ -32,13 +32,21 @@ graph TD
 	goal("I want to lose weight") -->|"But..."| o1("I don't have time to exercise")
 	o1 -->|"To solve this"| a1("Spare 30 minutes earlier to exercise")
 	o1 -->|"Suggested✨"| a2("Try to track calories")
-	subgraph tracking_calories
-		direction LR
-		a2 --> a2_a1("Download MyFitnessPal")
-		a2 --> a2_a2("Set a daily calorie goal")
-		a2 --> a2_a3("Track your calories")
+	subgraph exercise
+	direction LR
+		a1 -->|"If you want cardio"| a1_1("Jogging")
+		a1 -->|"If you want to build muscle"| a1_2("Weight lifting")
+		a1 -->|"If you want to improve your mobility"| a1_3("Yoga")
+		a1_2 -->|"1st major exercise"| a1_2_1("Bench press")
+		a1_2 -->|"2nd major exercise"| a1_2_2("Squat")
+		a1_2 -->|"3rd major exercise"| a1_2_3("Deadlift")
 	end
 	goal -->|"Successfully"| s1("I lost 5kg last month")
+
+[COMMENT]
+Here o is for obstacle, a is for actionable item, and s is for success.
+You can come up with your own node names, but please use the same node names for the same type of nodes.
+Make sure you don't leave any edge blank.
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.

@@ -19,12 +19,32 @@
 	import LucideAxis3d from "~icons/lucide/axis-3d";
 	import LucideLoader2 from "~icons/lucide/loader-2";
 
+	import { clipboard } from "@skeletonlabs/skeleton";
+	import LucideFiles from "~icons/lucide/files";
+
 	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
-	const { completion, complete, stop, isLoading } = useCompletion({
+	const {
+		completion: completionM,
+		complete: completeM,
+		isLoading: isLoadingM
+	} = useCompletion({
 		api: "/api/mermaid"
 	});
+
+	const { complete, completion } = useCompletion({
+		api: "/api/branch"
+	});
+
+	function injectBranch(snapshot: string, completion: string, r: string) {
+		const result = completion.replace(/`/g, "");
+
+		// if it hasn't end yet, put premature `end` to the end
+		$currentNote.mermaid = `${snapshot}
+
+${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
+	}
 
 	let mermaid: HTMLDivElement;
 	let pzoom: typeof panzoom | undefined;
@@ -45,18 +65,16 @@
 	});
 
 	async function genFlowchart() {
-		unsub = completion.subscribe((completion) => {
+		unsub = completionM.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
 			$currentNote.mermaid = result;
 		});
 
-		await complete(`TITLE: ${$currentNote.title}
+		await completeM(`TITLE: ${$currentNote.title}
 			CONTENT: ${$currentNote.content}
 			`).then(() => {
 			unsub();
 		});
-
-		$isLoading = false;
 	}
 
 	$: code = $currentNote.mermaid;
@@ -151,8 +169,25 @@
 		node
 	) => ({
 		type: "component",
-		component: modalComponent(node)
+		component: modalComponent(node),
+		response(r) {
+			if (r.action === "branch") {
+				const snapshot = get(currentNote).mermaid;
+				const unsub = completion.subscribe((completion) => {
+					if (completion.length > 0) {
+						injectBranch(snapshot, completion, r);
+					}
+				});
+				complete(r.prompt).then(() => {
+					unsub();
+				});
+			}
+		}
 	});
+
+	import { getToastStore } from "@skeletonlabs/skeleton";
+
+	const toastStore = getToastStore();
 </script>
 
 <svelte:window
@@ -190,7 +225,11 @@
 			<LucideAxis3d class="w-6 h-6" />
 		</button>
 
-		{#if isLoading}
+		<button class="btn-icon" use:clipboard={get(currentNote).mermaid}>
+			<LucideFiles class="w-6 h-6" />
+		</button>
+
+		{#if isLoadingM}
 			<LucideLoader2 class="w-6 h-6 animate-spin" />
 			<span>Generating...</span>
 		{/if}
