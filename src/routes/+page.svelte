@@ -14,9 +14,9 @@
 	$: ({ supabase } = data);
 
 	let texts = [
-		"Unclog your mind and let your thoughts flow.",
-		"Keep writing and don't hesitate for even a second.",
-		"We'll take care of the rest."
+		"Dump everything you have in your mind",
+		"Let Creeks help you sort them out",
+		"Share and combine your thoughts with your team"
 	];
 
 	/**
@@ -73,7 +73,7 @@
 			Creeks
 		</h1>
 		<h3 class="h2 text-secondary-400-500-token">
-			Unstuck your life with 5-minute <br class="sm:hidden" /> free-writing
+			Unstuck your tangled thoughts with 5-minute <br class="sm:hidden" /> free-writing
 		</h3>
 		<div class="mt-12 relative h-24 overflow-y-visible">
 			{#each $disappearingStore as disappearing}
