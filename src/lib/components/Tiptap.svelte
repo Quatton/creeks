@@ -17,13 +17,20 @@
 	import { useCompletion } from "ai/svelte";
 	import { cn } from "$lib/utils/cn";
 	import { derived } from "svelte/store";
+
 	import LucideSparkles from "~icons/lucide/sparkles";
+	import LucideCopy from "~icons/lucide/copy";
+	import LucideTrash2 from "~icons/lucide/trash-2";
+
 	import {
 		getModalStore,
+		popup,
 		type ModalComponent,
 		type ModalSettings
 	} from "@skeletonlabs/skeleton";
 	import TidyModal from "./TidyModal.svelte";
+	import { goto } from "$app/navigation";
+	import { format } from "date-fns";
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
@@ -37,12 +44,59 @@
 		title: "Tidy",
 		type: "component",
 		component: {
-			ref: TidyModal
+			ref: TidyModal,
+			props: {
+				currentNote: $currentNote
+			}
 		},
-		response: (instruction: string | boolean) => {
-			if (typeof instruction === "string") tidy(instruction);
+
+		response: (
+			payload:
+				| {
+						instruction: string;
+						combineWith: string[];
+				  }
+				| false
+		) => {
+			if (!payload) return;
+			const { instruction, combineWith } = payload;
+			tidy(instruction, combineWith);
 		}
 	};
+
+	async function triggerCopyModalHelper() {
+		const id = crypto.randomUUID();
+
+		await new Promise<void>((resolve, _) => {
+			modalStore.trigger({
+				title: "Make a copy",
+				type: "prompt",
+				body: "Give it a name",
+				value: note.title + "- Copy",
+				valueAttr: { type: "text" },
+				response: (title: string | false) => {
+					if (!title) return;
+					sessions.update((sessions) => {
+						if (!sessions) return [];
+						return [
+							...sessions,
+							{
+								title,
+								content: note.content,
+								createdAt: new Date(),
+								id,
+								mermaid: "",
+								tidied: false
+							}
+						];
+					});
+					resolve();
+				}
+			});
+		});
+
+		await goto(`/notes/${id}`);
+	}
 
 	onMount(() => {
 		// convert
@@ -130,12 +184,29 @@
 			}
 		};
 	});
-	export async function tidy(instruction: string) {
+	export async function tidy(instruction: string, combineWith: string[]) {
 		editor.setEditable(false);
 		const text = editor.storage.markdown.getMarkdown();
 
+		const allTexts = $sessions
+			.filter((session) => combineWith.includes(session.id))
+			.map(
+				(session) => `${format(
+					new Date(session.createdAt),
+					"yyyy MMM dd - HH:mm:ss"
+				)}:${session.title}
+
+${session.content}`
+			)
+			.join("\n\n");
+
 		const textWithInstruction = `[ORIGINAL TEXT]
+		${format(new Date(), "yyyy-MM-dd")}:${note.title}
+		
 ${text}
+
+[COMBINE WITH]
+${combineWith.length > 0 ? allTexts : "(No combine requests)"}
 
 [REVISE WITH ADDITIONAL INSTRUCTION (OVERRIDE ORIGINAL INSTRUCTION)]
 ${instruction}`;
@@ -145,6 +216,14 @@ ${instruction}`;
 			return sessions;
 		});
 		editor.setEditable(true);
+	}
+
+	function deleteThis() {
+		sessions.update((sessions) => {
+			return sessions.filter((session) => session.id !== note.id);
+		});
+
+		goto("/notes");
 	}
 </script>
 
@@ -170,8 +249,33 @@ ${instruction}`;
 			</span>
 			<span>Tidy</span>
 		</button>
+		<button class="btn btn-sm variant-ghost" on:click={triggerCopyModalHelper}>
+			<span>
+				<LucideCopy class="w-4 h-4" />
+			</span>
+			<span>Make a copy</span>
+		</button>
+		<button
+			use:popup={{
+				event: "hover",
+				target: "searchCombobox",
+				placement: "bottom"
+			}}
+			class="btn btn-sm variant-ghost"
+			on:click={deleteThis}
+		>
+			<span>
+				<LucideTrash2 class="w-4 h-4" />
+			</span>
+			<span>Delete</span>
+		</button>
 	</div>
 	<div class="overflow-y-auto">
 		<div bind:this={element} />
 	</div>
+</div>
+
+<div class="card p-4 variant-filled-surface" data-popup="searchCombobox">
+	<p>This will <strong>instantly</strong> delete the note!</p>
+	<div class="arrow variant-filled-surface" />
 </div>

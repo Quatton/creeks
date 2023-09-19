@@ -1,8 +1,9 @@
-<script>
+<script lang="ts">
 	import { goto } from "$app/navigation";
 	import Mermaid from "$lib/components/Mermaid.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
 	import { TabGroup, Tab } from "@skeletonlabs/skeleton";
+	import { format } from "date-fns";
 
 	import IconArrowLeft from "~icons/lucide/arrow-left";
 
@@ -23,7 +24,10 @@
 		<a href="/notes" class="btn-icon-lg">
 			<IconArrowLeft />
 		</a>
-		<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
+		<div class="space-y-2">
+			<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
+			<p>{format(new Date($note.createdAt), "yyyy MMM dd - HH:mm:ss")}</p>
+		</div>
 	</div>
 	<div
 		class="h-full sm:px-8 grow flex flex-col overflow-hidden [&_>_.tab-group]:h-full [&_>_.tab-group]:flex [&_>_.tab-group]:flex-col [&_>_.tab-group]:space-y-0 [&_>_.tab-group]:gap-2"
