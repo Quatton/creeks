@@ -1,12 +1,20 @@
 <script lang="ts">
 	import { getNoteStore } from "$lib/stores/core";
 	import { addNewNode, updateMermaidNode } from "$lib/utils/mermaid";
-	import { getModalStore } from "@skeletonlabs/skeleton";
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+
+	import LucidePlusSquare from "~icons/lucide/plus-square";
+	import LucideGitBranchPlus from "~icons/lucide/git-branch-plus";
+	import LucideTrash2 from "~icons/lucide/trash-2";
+	import LucideBomb from "~icons/lucide/bomb";
+	import { useCompletion } from "ai/svelte";
 
 	export let node: {
 		id: string;
 		label: string;
 	};
+
+	export let parent: any;
 	export let noteId: string;
 
 	let label = node.label;
@@ -14,15 +22,54 @@
 	const modalStore = getModalStore();
 	const noteStore = getNoteStore(noteId);
 
+	const submodal: ModalSettings = {
+		body: "Anything to ask for specifically?",
+		type: "prompt",
+		value: "Could you elaborate on that?",
+		valueAttr: { type: "text" },
+		response(r: string) {
+			$modalStore[1].response?.({
+				action: "branch",
+				prompt: `${$noteStore.mermaid}
+
+node to branch from: ${node.id}("${node.label}")
+additional instruction: ${r}`,
+				meta: r
+			});
+			modalStore.clear();
+		}
+	};
+
 	function updateLabel(label: string) {
 		$noteStore.mermaid = updateMermaidNode($noteStore.mermaid, {
 			id: node.id,
 			label
 		});
 	}
+
+	function deleteNode() {
+		// this will include every line that has either
+		// nodeId (and space or nothing after it, other wise it has to satisfy the next one)
+		// nodeId("label")
+		// then capture the entire line
+		const regex = new RegExp(
+			`(?:\\n)?(?:\\s\\w+)?(?:\\s-->.*)?\\s${node.id}\\b.*`,
+			"g"
+		);
+
+		$noteStore.mermaid = $noteStore.mermaid.replace(regex, "");
+	}
+
+	function clearNode() {
+		// same as deleteNode but keep the node itself
+		// only delete the lines that has nodeId
+		const regex = new RegExp(`(?:\\n)?\\s${node.id}\\s.*`, "g");
+
+		$noteStore.mermaid = $noteStore.mermaid.replace(regex, "");
+	}
 </script>
 
-<div class="rounded-md p-4 bg-surface-800 space-y-2">
+<div class="rounded-md p-4 bg-surface-800 w-modal space-y-2">
 	<form class="space-y-2">
 		<div class="space-y-1">
 			<label for="label" class="label">
@@ -49,7 +96,7 @@
 			</button>
 		</div>
 	</form>
-	<div class="flex flex-col">
+	<div class="flex flex-col gap-1">
 		<button
 			class="btn variant-filled-surface"
 			on:click={() => {
@@ -57,7 +104,48 @@
 				$noteStore.mermaid = addNewNode($noteStore.mermaid, node.id);
 			}}
 		>
-			Add a new node
+			<span>
+				<LucidePlusSquare class="w-4 h-4" />
+			</span>
+			<span>Add a new node</span>
+		</button>
+		<button
+			class="btn variant-filled-surface"
+			on:click={() => {
+				modalStore.update((modals) => [submodal, ...modals]);
+			}}
+		>
+			<span>
+				<LucideGitBranchPlus class="w-4 h-4" />
+			</span>
+			<span
+				>Branch a subgraph
+				<span class="chip variant-soft-primary">AI</span>
+			</span>
+		</button>
+		<button
+			class="btn variant-filled-surface"
+			on:click={() => {
+				modalStore.close();
+				deleteNode();
+			}}
+		>
+			<span>
+				<LucideTrash2 class="w-4 h-4" />
+			</span>
+			<span>Delete this node</span>
+		</button>
+		<button
+			class="btn variant-filled-surface"
+			on:click={() => {
+				modalStore.close();
+				clearNode();
+			}}
+		>
+			<span>
+				<LucideBomb class="w-4 h-4" />
+			</span>
+			<span>Clear this node</span>
 		</button>
 	</div>
 </div>

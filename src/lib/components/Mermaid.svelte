@@ -16,12 +16,35 @@
 	import { get, type Unsubscriber } from "svelte/store";
 	export let note: CreekNote;
 
+	import LucideAxis3d from "~icons/lucide/axis-3d";
+	import LucideLoader2 from "~icons/lucide/loader-2";
+
+	import { clipboard } from "@skeletonlabs/skeleton";
+	import LucideFiles from "~icons/lucide/files";
+
 	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
-	const { completion, complete, stop } = useCompletion({
+	const {
+		completion: completionM,
+		complete: completeM,
+		isLoading: isLoadingM
+	} = useCompletion({
 		api: "/api/mermaid"
 	});
+
+	const { complete, completion } = useCompletion({
+		api: "/api/branch"
+	});
+
+	function injectBranch(snapshot: string, completion: string, r: string) {
+		const result = completion.replace(/`/g, "");
+
+		// if it hasn't end yet, put premature `end` to the end
+		$currentNote.mermaid = `${snapshot}
+
+${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
+	}
 
 	let mermaid: HTMLDivElement;
 	let pzoom: typeof panzoom | undefined;
@@ -41,13 +64,13 @@
 		};
 	});
 
-	function genFlowchart() {
-		unsub = completion.subscribe((completion) => {
+	async function genFlowchart() {
+		unsub = completionM.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
 			$currentNote.mermaid = result;
 		});
 
-		complete(`TITLE: ${$currentNote.title}
+		await completeM(`TITLE: ${$currentNote.title}
 			CONTENT: ${$currentNote.content}
 			`).then(() => {
 			unsub();
@@ -81,7 +104,6 @@
 				pan: undefined,
 				zoom: undefined
 			};
-			console.log("it was", pan, zoom);
 			pzoom = panzoom("#graph-div", {
 				fit: true,
 				center: true,
@@ -93,8 +115,6 @@
 			if (!!pan && !!zoom && Number.isFinite(zoom)) {
 				pzoom.zoom(zoom);
 				pzoom.pan(pan);
-
-				console.log("correct?", pzoom.getPan(), pzoom.getZoom());
 			}
 		});
 	};
@@ -149,8 +169,25 @@
 		node
 	) => ({
 		type: "component",
-		component: modalComponent(node)
+		component: modalComponent(node),
+		response(r) {
+			if (r.action === "branch") {
+				const snapshot = get(currentNote).mermaid;
+				const unsub = completion.subscribe((completion) => {
+					if (completion.length > 0) {
+						injectBranch(snapshot, completion, r);
+					}
+				});
+				complete(r.prompt).then(() => {
+					unsub();
+				});
+			}
+		}
 	});
+
+	import { getToastStore } from "@skeletonlabs/skeleton";
+
+	const toastStore = getToastStore();
 </script>
 
 <svelte:window
@@ -166,7 +203,35 @@
 	}}
 />
 
-<div
-	bind:this={mermaid}
-	class="h-full w-full [&_>_#graph-div]:h-full [&_>_#graph-div]:w-full"
-/>
+<div class="relative grow flex flex-col">
+	<div bind:this={mermaid} class="grow [&_>_#graph-div]:h-full overflow-auto" />
+
+	<div class="flex gap-2 items-center">
+		<button
+			class="btn-icon"
+			on:click={() => {
+				// graph the first line of mermaid
+				const firstLine = $currentNote.mermaid.split("\n")[0];
+
+				// change TD to LR and vice versa
+				const newLine = firstLine.includes("TD")
+					? firstLine.replace("TD", "LR")
+					: firstLine.replace("LR", "TD");
+
+				$currentNote.mermaid =
+					newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
+			}}
+		>
+			<LucideAxis3d class="w-6 h-6" />
+		</button>
+
+		<button class="btn-icon" use:clipboard={get(currentNote).mermaid}>
+			<LucideFiles class="w-6 h-6" />
+		</button>
+
+		{#if isLoadingM}
+			<LucideLoader2 class="w-6 h-6 animate-spin" />
+			<span>Generating...</span>
+		{/if}
+	</div>
+</div>

@@ -2,16 +2,21 @@
 	import Disappearing from "$lib/components/Disappearing.svelte";
 	import { disappearingStore } from "$lib/stores/disappearing";
 	import { onMount } from "svelte";
+	import type { PageData } from "./$types";
 
 	let text = "";
 	let index = 0;
 	let jndex = 0;
 	let timeout: NodeJS.Timeout;
 
+	export let data: PageData;
+	let { supabase, session } = data;
+	$: ({ supabase } = data);
+
 	let texts = [
-		"Unclog your mind and let your thoughts flow.",
-		"Keep writing and don't hesitate for even a second.",
-		"We'll take care of the rest."
+		"Dump everything you have in your mind",
+		"Let Creeks help you sort them out",
+		"Share and combine your thoughts with your team"
 	];
 
 	/**
@@ -68,7 +73,7 @@
 			Creeks
 		</h1>
 		<h3 class="h2 text-secondary-400-500-token">
-			Unstuck your life with 5-minute <br class="sm:hidden" /> free-writing
+			Unstuck your tangled thoughts with 5-minute <br class="sm:hidden" /> free-writing
 		</h3>
 		<div class="mt-12 relative h-24 overflow-y-visible">
 			{#each $disappearingStore as disappearing}
@@ -83,8 +88,13 @@
 				disabled
 			/>
 		</div>
-		<div class="flex justify-center">
-			<a href="/new" class="btn variant-filled-primary">Try it out</a>
+		<div class="flex justify-center items-center gap-2">
+			{#if !session}
+				<a href="/new" class="btn variant-filled-primary">Try it out</a>
+				<a href="/signin" class="btn variant-filled-secondary">Sign in</a>
+			{:else}
+				<a href="/new" class="btn variant-filled-primary">New creek</a>
+			{/if}
 		</div>
 	</article>
 </section>

@@ -31,7 +31,7 @@ The user might ask questions. Keep in mind that what user says means they are ta
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the revised content in the same language as the user's input.
-Especially if the user input their text in Thai, you should output the revised content in Thai as well.
+Except for the case where the user specifically asks you to revise the content in another language.
 `.trim();
 
 const USER_PROMPT = (prompt: string) =>

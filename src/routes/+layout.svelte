@@ -4,7 +4,7 @@
 	import "../app.postcss";
 	import Header from "./Header.svelte";
 	import Footer from "./Footer.svelte";
-	import { AppShell, Modal } from "@skeletonlabs/skeleton";
+	import { AppShell, Modal, Toast } from "@skeletonlabs/skeleton";
 	import { cn } from "$lib/utils/cn";
 
 	import { setModeCurrent } from "@skeletonlabs/skeleton";
@@ -57,7 +57,10 @@
 </script>
 
 <Modal />
-<AppShell slotPageContent="grid place-items-center">
+<Toast />
+<AppShell
+	slotPageContent="flex items-center justify-center overflow-hidden shrink-1"
+>
 	<svelte:fragment slot="header">
 		<Header />
 	</svelte:fragment>

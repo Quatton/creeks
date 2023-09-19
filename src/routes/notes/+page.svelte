@@ -40,7 +40,7 @@
 	<meta name="description" content="Your saved notes" />
 </svelte:head>
 
-<section class="container self-start p-2">
+<section class="container self-start p-2 max-h-full overflow-auto">
 	<Table
 		source={sessionTable}
 		interactive
