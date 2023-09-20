@@ -18,6 +18,7 @@
 
 	import LucideAxis3d from "~icons/lucide/axis-3d";
 	import LucideLoader2 from "~icons/lucide/loader-2";
+	import LucideWrench from "~icons/lucide/wrench";
 
 	import { clipboard } from "@skeletonlabs/skeleton";
 	import LucideFiles from "~icons/lucide/files";
@@ -25,11 +26,7 @@
 	const currentNote = getNoteStore(note.id);
 
 	let unsub: Unsubscriber = () => {};
-	const {
-		completion: completionM,
-		complete: completeM,
-		isLoading: isLoadingM
-	} = useCompletion({
+	const { completion: completionM, complete: completeM } = useCompletion({
 		api: "/api/mermaid"
 	});
 
@@ -37,12 +34,15 @@
 		api: "/api/branch"
 	});
 
+	const { complete: completeF, completion: completionF } = useCompletion({
+		api: "/api/fix"
+	});
+
 	function injectBranch(snapshot: string, completion: string, r: string) {
 		const result = completion.replace(/`/g, "");
 
 		// if it hasn't end yet, put premature `end` to the end
 		$currentNote.mermaid = `${snapshot}
-
 ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 	}
 
@@ -52,9 +52,15 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 	let nodes: NodeListOf<SVGElement>;
 	let edges: NodeListOf<SVGElement>;
 
+	let shouldFix = false;
+
 	onMount(() => {
 		if ($currentNote.mermaid === "") {
 			genFlowchart();
+		} else {
+			mermaidParse($currentNote.mermaid).then((t) => {
+				shouldFix = !t;
+			});
 		}
 		return () => {
 			unsub();
@@ -63,6 +69,22 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 			});
 		};
 	});
+
+	async function fixFlowchart() {
+		const unsub = completionF.subscribe((completion) => {
+			const result = completion.replace(/`/g, "");
+			$currentNote.mermaid = result;
+		});
+
+		await completeF(`[ORIGINAL MARKDOWN CONTENT]
+# ${$currentNote.title}
+${$currentNote.content}
+
+[ORIGINAL MERMAID FLOWCHART]
+${$currentNote.mermaid}`).then(() => {
+			unsub();
+		});
+	}
 
 	async function genFlowchart() {
 		unsub = completionM.subscribe((completion) => {
@@ -77,8 +99,13 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 		});
 	}
 
+	let id: NodeJS.Timeout | undefined;
 	$: code = $currentNote.mermaid;
 	$: {
+		id && clearTimeout(id);
+		id = setTimeout(() => {
+			shouldFix = true;
+		}, 5000);
 		mermaidParse(code).then(async (t) => {
 			if (t) {
 				const { svg } = await mermaidRender(
@@ -91,6 +118,8 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 				setupPanzoom();
 				mermaid.innerHTML = svg;
 				bindClicks();
+				clearTimeout(id);
+				shouldFix = false;
 			}
 		});
 	}
@@ -110,7 +139,8 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 				beforePan: handlePanZoomChange,
 				beforeZoom: handlePanZoomChange,
 				controlIconsEnabled: true,
-				zoomScaleSensitivity: 0.2
+				zoomScaleSensitivity: 0.2,
+				maxZoom: Infinity
 			});
 			if (!!pan && !!zoom && Number.isFinite(zoom)) {
 				pzoom.zoom(zoom);
@@ -229,9 +259,26 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 			<LucideFiles class="w-6 h-6" />
 		</button>
 
+		<button
+			class="btn-icon"
+			on:click={() => {
+				if (shouldFix) fixFlowchart();
+				shouldFix = false;
+			}}
+		>
+			<LucideWrench class="w-6 h-6" />
+		</button>
+
+		{#if shouldFix}
+			<span class="text-sm">
+				This flowchart is broken. Please click the wrench icon to fix it.
+			</span>
+		{/if}
+
+		<!-- 
 		{#if isLoadingM}
 			<LucideLoader2 class="w-6 h-6 animate-spin" />
 			<span>Generating...</span>
-		{/if}
+		{/if} -->
 	</div>
 </div>
