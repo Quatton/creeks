@@ -4,13 +4,14 @@
 	import { derived } from "svelte/store";
 
 	export let parent: any;
-	const session = derived(page, ($page) => $page.data.session);
 
-	const auth = supabase.auth;
+	const session = derived(page, ($page) => $page.data.session);
 
 	const searchParams = new URLSearchParams({
 		redirect: $page.route.id ?? "/"
 	});
+
+	const auth = supabase.auth;
 
 	const handleGoogleSignIn = async () => {
 		await auth.signInWithOAuth({

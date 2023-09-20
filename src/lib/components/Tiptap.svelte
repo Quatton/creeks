@@ -21,6 +21,7 @@
 	import LucideCopy from "~icons/lucide/copy";
 	import LucideTrash2 from "~icons/lucide/trash-2";
 	import LucideShare2 from "~icons/lucide/share-2";
+	import LucideArrowUpRight from "~icons/lucide/arrow-up-right";
 
 	import {
 		getModalStore,
@@ -28,7 +29,7 @@
 		clipboard
 	} from "@skeletonlabs/skeleton";
 	import TidyModal from "./TidyModal.svelte";
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { format } from "date-fns";
 	import CombineWithModal from "./CombineWithModal.svelte";
 	import { supabase } from "$lib/supabase/client";
@@ -70,8 +71,6 @@
 	};
 
 	async function triggerCopyModalHelper() {
-		if (!currentNote) return;
-
 		const id = crypto.randomUUID();
 
 		await new Promise<void>((resolve, _) => {
@@ -81,32 +80,34 @@
 				component: {
 					ref: CombineWithModal,
 					props: {
-						currentNote: $currentNote
+						currentNote: $currentNote ?? note
 					}
 				},
 				response(payload: { title: string; combineWith: string[] } | false) {
 					if (!payload) return;
 					const { title, combineWith } = payload;
 					const allNotes = $sessions
-						.filter((session) =>
-							[...combineWith, $currentNote?.id].includes(session.id)
-						)
+						.filter((session) => combineWith.includes(session.id))
 						.toSorted(
 							(a, b) =>
 								new Date(a.createdAt).getTime() -
 								new Date(b.createdAt).getTime()
 						);
 
-					const combinedContent = allNotes
+					const combinedContent = `${
+						$currentNote ? $currentNote.content : note.content
+					}
+
+					${allNotes
 						.map(
 							(note) => `# ${note.title}
 > ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm")}
 
 ${note.content}`
 						)
-						.join("\n\n");
+						.join("\n\n")}`;
 
-					const combinedMermaid = allNotes
+					const combinedMermaid = [...allNotes, note]
 						.map((note) => note.mermaid)
 						.join("\n\n");
 
@@ -117,7 +118,7 @@ ${note.content}`
 								title,
 								content: combinedContent,
 								createdAt: new Date(),
-								id: crypto.randomUUID(),
+								id,
 								mermaid: combinedMermaid,
 								tidied: false
 							}
@@ -129,6 +130,7 @@ ${note.content}`
 			});
 		});
 
+		await goto(`/local`);
 		await goto(`/local/${id}`);
 	}
 
@@ -285,7 +287,29 @@ ${instruction}
 
 		$currentNote.shared_id = got_shared_id;
 
+		await goto(`/shared`);
 		await goto(`/shared/${got_shared_id}`);
+	}
+
+	async function stopSharing() {
+		if ($currentNote || !("author_id" in note)) return;
+
+		if ($session?.user.id !== note.author_id) return;
+
+		const res = await new Promise<boolean>((response, _) =>
+			modalStore.trigger({
+				title: "Stop sharing: " + note.title,
+				body: "This will <strong>instantly</strong> stop sharing the note!",
+				type: "confirm",
+				response
+			})
+		);
+
+		if (res) {
+			await supabase.from("shared_notes").delete().eq("id", note.id);
+			await goto("/local");
+			await goto("/local/" + note.local_id);
+		}
 	}
 </script>
 
@@ -326,11 +350,15 @@ ${instruction}
 				</span>
 				<span>Delete</span>
 			</button>
-		{/if}
-		{#if folder === "local"}
 			<button
 				class="btn btn-sm variant-ghost"
-				on:click={() =>
+				on:click={async () => {
+					if ($currentNote?.shared_id) {
+						await goto(`/shared`);
+						await goto(`/shared/${$currentNote.shared_id}`);
+						return;
+					}
+
 					modalStore.trigger({
 						title: "Share note",
 						body: "This will share the note with the world! (Publicly, for now)",
@@ -338,12 +366,13 @@ ${instruction}
 						response: (r) => {
 							if (r) shareNote();
 						}
-					})}
+					});
+				}}
 			>
 				<span>
 					<LucideShare2 class="w-4 h-4" />
 				</span>
-				<span>Share</span>
+				<span>{$currentNote?.shared_id ? "View Shared Page" : "Share"}</span>
 			</button>
 		{:else}
 			<button
@@ -354,6 +383,26 @@ ${instruction}
 					<LucideCopy class="w-4 h-4" />
 				</span>
 				<span>Copy Share Link</span>
+			</button>
+			<button
+				class="btn btn-sm variant-ghost"
+				on:click={async () => {
+					await goto(`/local`);
+					await goto(`/local/${"local_id" in note ? note.local_id : ""}`);
+				}}
+			>
+				<span>
+					<LucideArrowUpRight class="w-4 h-4" />
+				</span>
+				<span>View Local Page</span>
+			</button>
+		{/if}
+		{#if "author_id" in note && $session?.user.id === note.author_id && folder === "shared"}
+			<button class="btn btn-sm variant-ghost" on:click={stopSharing}>
+				<span>
+					<LucideTrash2 class="w-4 h-4" />
+				</span>
+				<span>Stop sharing</span>
 			</button>
 		{/if}
 	</div>

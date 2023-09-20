@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CreekNote } from "$lib/types/core";
+	import type { CreekNote, SharedNote } from "$lib/types/core";
 	import { getModalStore } from "@skeletonlabs/skeleton";
 
 	import LucideX from "~icons/lucide/x";
@@ -7,7 +7,7 @@
 	import { sessions } from "$lib/stores/core";
 
 	export let parent: any;
-	export let currentNote: CreekNote;
+	export let currentNote: CreekNote | SharedNote;
 
 	let combineWith: string[] = [];
 	let title = "Copy of " + currentNote.title;

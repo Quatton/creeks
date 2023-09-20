@@ -1,4 +1,4 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;
@@ -10,5 +10,9 @@ export const load: PageLoad = async ({ params }) => {
 
 	if (!["local", "shared"].includes(folder)) {
 		throw error(404, `Folder "${folder}" does not exist`);
+	}
+
+	if (folder === "shared") {
+		throw error(404, `Folder "${folder}" is reserved`);
 	}
 };
