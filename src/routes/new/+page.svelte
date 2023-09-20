@@ -5,6 +5,7 @@
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
 
 	import LucideTrash2 from "~icons/lucide/trash-2";
+	import LucideTimer from "~icons/lucide/timer";
 
 	const modalStore = getModalStore();
 
@@ -241,8 +242,8 @@
 				class="w-fit items-center input-group grid-cols-[auto_auto]"
 				in:fade={{ duration: 300 }}
 			>
-				<label class="label p-2 variant-filled-surface" for="timer">
-					Timer
+				<label class="label p-2" for="timer">
+					<LucideTimer />
 				</label>
 				<select class="select" bind:value={time} id="timer">
 					<option value={-1}>(Untimed)</option>
