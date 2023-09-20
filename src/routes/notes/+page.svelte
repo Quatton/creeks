@@ -5,7 +5,7 @@
 		tableMapperValues,
 		type TableSource
 	} from "@skeletonlabs/skeleton";
-	import { derived } from "svelte/store";
+	import { derived, type Readable } from "svelte/store";
 	import { format } from "date-fns";
 	import { goto } from "$app/navigation";
 
@@ -24,15 +24,18 @@
 		});
 	});
 
-	const sessionTable: TableSource = {
-		head: ["Title", "Content", "Created At"],
-		body: tableMapperValues($convertedSessions, [
-			"title",
-			"content",
-			"createdAt"
-		]),
-		meta: tableMapperValues($convertedSessions, ["id"])
-	};
+	const sessionTable: Readable<TableSource> = derived(
+		convertedSessions,
+		($convertedSessions) => ({
+			head: ["Title", "Content", "Created At"],
+			body: tableMapperValues($convertedSessions, [
+				"title",
+				"content",
+				"createdAt"
+			]),
+			meta: tableMapperValues($convertedSessions, ["id"])
+		})
+	);
 </script>
 
 <svelte:head>
@@ -42,7 +45,7 @@
 
 <section class="container self-start p-2 max-h-full overflow-auto">
 	<Table
-		source={sessionTable}
+		source={$sessionTable}
 		interactive
 		on:selected={(e) => {
 			goto(`/notes/${e.detail[0]}`);

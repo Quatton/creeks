@@ -72,12 +72,6 @@
 			});
 		});
 		currentSession.set(null);
-		currentSession.update((session) => {
-			if (!session) return null;
-			return {
-				...session
-			};
-		});
 	}
 
 	const modal: ModalSettings = {

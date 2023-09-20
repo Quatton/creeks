@@ -28,6 +28,7 @@
 		value: "Could you elaborate on that?",
 		valueAttr: { type: "text" },
 		response(r: string) {
+			if (!r) return;
 			$modalStore[1].response?.({
 				action: "branch",
 				prompt: `${$noteStore.mermaid}

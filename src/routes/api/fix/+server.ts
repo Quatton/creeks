@@ -24,37 +24,16 @@ This is due to one or more of the following reasons:
 2. Fix any errors in the flowchart.
 3. Go back to the original markdown content and make sure that it includes all the necessary information.
 
-[EXAMPLE PROMPT]
-
-[ORIGINAL MARKDOWN CONTENT]
-I made pasta today.
-I also made a salad.
-I made a smoothie too.
-
-[ORIGINAL MERMAID FLOWCHART]
-graph TD
-  goal("Things I made today") -->|"Which is"| s1("Pasta")
-
-graph TD
-  goal("Delicious food I cook") -->|"Which is"| s1("Salad")
-
-[EXAMPLE RESPONSE]
-graph TD
-  goal("Things I made today") -->|"Which is"| s1("Pasta")
-  goal -->|"Which is"| s2("Salad")
-  goal -->|"Which is"| s3("Smoothie")
-
-[COMMENT]
-Here o is for obstacle, a is for actionable item, and s is for success.
-You can come up with your own node names, but please use the same node names for the same type of nodes.
-Make sure you don't leave any edge blank.
-As you can see, Smoothie was not included in the original flowchart, but it's in the original markdown content. 
-You should also add it in the flowchart.
-
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.
 Except for the subgraph name. For the subgraph name, please output it in English.
 For example, subgraph ภาษาไทย is disallowed
+
+[CAUTION]
+The flowchart might contain hard-to-fix errors or weird behavior such as duplicated subgraph. You should remove stuff you are not sure about.
+You should escape ", (, and ) with backslash or else it will break the Mermaid
+Your response should start with graph TD or it will break. If you want to use subgraph, use graph TD first and then switch to subgraph with direction LR.
+Make sure you end it.
 `.trim();
 
 const USER_PROMPT = (prompt: string) =>
@@ -76,7 +55,7 @@ export async function POST({ request }) {
 			}
 		],
 		temperature: 0.2,
-		model: "gpt-3.5-turbo-16k",
+		model: "gpt-4",
 		stream: true
 	});
 

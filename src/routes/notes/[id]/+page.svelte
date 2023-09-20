@@ -26,7 +26,7 @@
 		</a>
 		<div class="space-y-2">
 			<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
-			<p>{format(new Date($note.createdAt), "yyyy MMM dd - HH:mm:ss")}</p>
+			<p>{format(new Date($note.createdAt), "yyyy MMM dd - HH:mm")}</p>
 		</div>
 	</div>
 	<div

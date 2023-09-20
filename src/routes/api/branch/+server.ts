@@ -54,16 +54,16 @@ subgraph exercise
 		a1 -->|"If you want cardio"| a1_1("Jogging")
 		a1 -->|"If you want to build muscle"| a1_2("Weight lifting")
 		a1 -->|"If you want to improve your mobility"| a1_3("Yoga")
-		a1_2 -->|"1st major exercise"| a1_2_1("Bench press")
-		a1_2 -->|"2nd major exercise"| a1_2_2("Squat")
-		a1_2 -->|"3rd major exercise"| a1_2_3("Deadlift")
 	end
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.
 Except for the subgraph name. For the subgraph name, please output it in English.
-For example, subgraph ภาษาไทย is disallowed
-`.trim();
+For example, subgraph ภาษาไทย is disallowed.
+
+[CAUTION]
+You should escape ", (, and ) with backslash or else it will break the Mermaid.
+You shouldn't layer two subgraphs together. You should only branch from the main graph.`.trim();
 
 const USER_PROMPT = (prompt: string) =>
 	`${prompt ? prompt : "(no prompt please return only empty string)"}
@@ -83,7 +83,9 @@ export async function POST({ request }) {
 				content: USER_PROMPT(prompt)
 			}
 		],
-		temperature: 0.2,
+		temperature: 0.7,
+		presence_penalty: 0.7,
+		frequency_penalty: 0.4,
 		model: "gpt-3.5-turbo-16k",
 		stream: true
 	});

@@ -3,16 +3,13 @@
 	import { Editor } from "@tiptap/core";
 	import StarterKit from "@tiptap/starter-kit";
 	import type { CreekNote } from "$lib/types/core";
-	import { currentSession, sessions } from "$lib/stores/core";
+	import { getNoteStore, sessions } from "$lib/stores/core";
 	import { Markdown } from "tiptap-markdown";
 	let element: HTMLDivElement;
 	let editor: InstanceType<typeof Editor>;
 
 	export let note: CreekNote;
-	const index = $sessions.findIndex((session) => session.id === note.id);
-	const currentNote = derived(sessions, ($sessions) => {
-		return $sessions.find((session) => session.id === note.id)!;
-	});
+	const currentNote = getNoteStore(note.id);
 
 	import { useCompletion } from "ai/svelte";
 	import { cn } from "$lib/utils/cn";
@@ -93,7 +90,7 @@
 					const combinedContent = allNotes
 						.map(
 							(note) => `# ${note.title}
-> ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm:ss")}
+> ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm")}
 
 ${note.content}`
 						)
@@ -175,23 +172,7 @@ ${note.content}`
 			onTransaction: ({ editor }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
-				if (index !== -1) {
-					sessions.update((sessions) => {
-						sessions[index].content = editor.storage.markdown.getMarkdown();
-						return sessions;
-					});
-				} else {
-					currentSession.update((session) => {
-						if (session) {
-							return {
-								...session,
-								content: editor.storage.markdown.getMarkdown()
-							};
-						} else {
-							return session;
-						}
-					});
-				}
+				$currentNote.content = editor.storage.markdown.getMarkdown();
 			}
 		});
 		// editor.commands.selectAll();
@@ -216,35 +197,32 @@ ${note.content}`
 		const text = editor.storage.markdown.getMarkdown();
 
 		const textWithInstruction = `[ORIGINAL TEXT]
-		${format(new Date(), "yyyy-MM-dd")}:${note.title}
-		
 ${text}
 
-[REVISE WITH ADDITIONAL INSTRUCTION (OVERRIDE ORIGINAL INSTRUCTION)]
-${instruction}`;
+[ADDITIONAL INSTRUCTION]
+${instruction}
+- Don't have to include [REVISED TEXT] in your response`;
 		await complete(textWithInstruction);
-		sessions.update((sessions) => {
-			sessions[index].tidied = true;
-			return sessions;
-		});
+		$currentNote.tidied = true;
 		editor.setEditable(true);
 	}
 
 	async function deleteThis() {
-		modalStore.trigger({
-			title: "Deleting: " + note.title,
-			body: "This will <strong>instantly</strong> delete the note!",
-			type: "confirm",
-			response(r) {
-				if (r) {
-					sessions.update((sessions) => {
-						return sessions.filter((session) => session.id !== note.id);
-					});
+		const res = await new Promise<boolean>((response, _) =>
+			modalStore.trigger({
+				title: "Deleting: " + note.title,
+				body: "This will <strong>instantly</strong> delete the note!",
+				type: "confirm",
+				response
+			})
+		);
 
-					goto("/notes");
-				}
-			}
-		});
+		if (res) {
+			await goto("/notes");
+			sessions.update((sessions) => {
+				return sessions.filter((session) => session.id !== note.id);
+			});
+		}
 	}
 </script>
 
