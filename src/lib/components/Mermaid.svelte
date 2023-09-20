@@ -19,6 +19,8 @@
 	import LucideAxis3d from "~icons/lucide/axis-3d";
 	import LucideLoader2 from "~icons/lucide/loader-2";
 	import LucideWrench from "~icons/lucide/wrench";
+	import LucideClipboardPaste from "~icons/lucide/clipboard-paste";
+	import LucideClipboardCopy from "~icons/lucide/copy";
 
 	import { clipboard } from "@skeletonlabs/skeleton";
 	import LucideFiles from "~icons/lucide/files";
@@ -43,6 +45,7 @@
 				pzoom?.resize();
 				pzoom?.reset();
 			});
+			prevBranch = completion;
 		}
 	});
 
@@ -55,6 +58,8 @@
 			});
 		}
 	});
+
+	let prevBranch = "";
 
 	function injectBranch(snapshot: string, completion: string, r: string) {
 		const result = completion.replace(/`/g, "");
@@ -80,8 +85,11 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 				shouldFix = !t;
 			});
 		}
+		setTimeout(() => {
+			pzoom?.resize();
+			pzoom?.reset();
+		}, 0);
 		return () => {
-			unsub();
 			nodes.forEach((node) => {
 				node.removeEventListener("click", clickNode(node));
 			});
@@ -98,7 +106,7 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 # ${$currentNote.title}
 ${$currentNote.content}
 
-[ORIGINAL MERMAID FLOWCHART]
+[ORIGINAL MERMAID FLOWCHART (might contain multiples)]
 ${$currentNote.mermaid}`).then(() => {
 			unsub();
 		});
@@ -227,14 +235,10 @@ ${$currentNote.mermaid}`).then(() => {
 			if (r.action === "branch") {
 				const snapshot = get(currentNote).mermaid;
 				const unsub = completion.subscribe((completion) => {
-					if (completion.length > 0) {
-						injectBranch(snapshot, completion, r);
-					}
+					if (completion === prevBranch) return;
+					injectBranch(snapshot, completion, r.meta);
 				});
-				complete(r.prompt).then(() => {
-					unsub();
-					stop();
-				});
+				complete(r.prompt);
 			}
 		}
 	});
@@ -278,19 +282,29 @@ ${$currentNote.mermaid}`).then(() => {
 					newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
 
 				setTimeout(() => {
-					pzoom?.reset();
 					pzoom?.resize();
+					pzoom?.reset();
 				}, 0);
 			}}
 		>
 			<LucideAxis3d class="w-6 h-6" />
 		</button>
 
-		<button class="btn-icon" use:clipboard={get(currentNote).mermaid}>
-			<LucideFiles class="w-6 h-6" />
+		<button class="btn-icon" use:clipboard={$currentNote.mermaid}>
+			<LucideClipboardCopy class="w-6 h-6" />
 		</button>
 
-		<button
+		<!-- <button
+			class="btn-icon"
+			on:click={async () => {
+				const c = new Clipboard();
+				$currentNote.mermaid = await c.readText();
+			}}
+		>
+			<LucideClipboardPaste class="w-6 h-6" />
+		</button> -->
+
+		<!-- <button
 			class="btn-icon"
 			on:click={() => {
 				fixFlowchart();
@@ -304,7 +318,7 @@ ${$currentNote.mermaid}`).then(() => {
 			<span class="text-sm">
 				This flowchart is broken. Please click the wrench icon to fix it.
 			</span>
-		{/if}
+		{/if} -->
 
 		<!-- 
 		{#if isLoadingM}
