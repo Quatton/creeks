@@ -82,7 +82,7 @@
 					const { title, combineWith } = payload;
 					const allNotes = $sessions
 						.filter((session) =>
-							[...combineWith, ...$currentNote.id].includes(session.id)
+							[...combineWith, $currentNote.id].includes(session.id)
 						)
 						.toSorted(
 							(a, b) =>
@@ -230,20 +230,21 @@ ${instruction}`;
 		editor.setEditable(true);
 	}
 
-	function deleteThis() {
+	async function deleteThis() {
 		modalStore.trigger({
 			title: "Deleting: " + note.title,
 			body: "This will <strong>instantly</strong> delete the note!",
 			type: "confirm",
 			response(r) {
-				if (r)
+				if (r) {
 					sessions.update((sessions) => {
 						return sessions.filter((session) => session.id !== note.id);
 					});
+
+					goto("/notes");
+				}
 			}
 		});
-
-		goto("/notes");
 	}
 </script>
 
@@ -276,13 +277,8 @@ ${instruction}`;
 			<span>Make a copy</span>
 		</button>
 		<button
-			use:popup={{
-				event: "hover",
-				target: "searchCombobox",
-				placement: "bottom"
-			}}
 			class="btn btn-sm variant-ghost"
-			on:click={deleteThis}
+			on:click|preventDefault={deleteThis}
 		>
 			<span>
 				<LucideTrash2 class="w-4 h-4" />
@@ -293,9 +289,4 @@ ${instruction}`;
 	<div class="overflow-y-auto">
 		<div bind:this={element} />
 	</div>
-</div>
-
-<div class="card p-4 variant-filled-surface" data-popup="searchCombobox">
-	<p>This will <strong>instantly</strong> delete the note!</p>
-	<div class="arrow variant-filled-surface" />
 </div>
