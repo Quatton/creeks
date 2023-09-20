@@ -33,8 +33,11 @@ export const updateMermaidNode = (
 	// 3. profit
 	const nodeId = update.id;
 	const label = update.label;
-	const regex = new RegExp(`${nodeId}\\(".*"\\)`);
-	const newCode = code.replace(regex, `${nodeId}("${label}")`);
+	const regex = new RegExp(`${nodeId}\\(.*\\)`, "gm");
+	const newCode = code.replace(
+		regex,
+		`${nodeId}("${label.replace(/"/g, '\\"')}")`
+	);
 	return newCode;
 };
 
