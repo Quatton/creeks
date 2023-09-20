@@ -73,7 +73,7 @@
 			Creeks
 		</h1>
 		<h3 class="h2 text-secondary-400-500-token">
-			Unstuck your tangled thoughts with 5-minute <br class="sm:hidden" /> free-writing
+			Untangle thoughts with 5-minute <br class="sm:hidden" /> free-writing
 		</h3>
 		<div class="mt-12 relative h-24 overflow-y-visible">
 			{#each $disappearingStore as disappearing}
