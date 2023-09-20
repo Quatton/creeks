@@ -59,6 +59,18 @@
 		}
 	});
 
+	const { complete: completeQ, completion: completionQ } = useCompletion({
+		api: "/api/ask",
+		onFinish: (_, completion) => {
+			setTimeout(() => {
+				pzoom?.resize();
+				pzoom?.reset();
+			});
+			prevQ = completion;
+		}
+	});
+
+	let prevQ = "";
 	let prevBranch = "";
 
 	function injectBranch(snapshot: string, completion: string, r: string) {
@@ -67,6 +79,14 @@
 		// if it hasn't end yet, put premature `end` to the end
 		$currentNote.mermaid = `${snapshot}
 ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
+	}
+
+	function injectQuestion(snapshot: string, completion: string, r: string) {
+		const result = completion.replace(/`/g, "");
+
+		// if it hasn't end yet, put premature `end` to the end
+		$currentNote.mermaid = `${snapshot}
+		${result}`;
 	}
 
 	let mermaid: HTMLDivElement;
@@ -239,6 +259,14 @@ ${$currentNote.mermaid}`).then(() => {
 					injectBranch(snapshot, completion, r.meta);
 				});
 				complete(r.prompt);
+			}
+			if (r.action === "ask") {
+				const snapshot = get(currentNote).mermaid;
+				const unsub = completionQ.subscribe((completion) => {
+					if (completion === prevQ) return;
+					injectQuestion(snapshot, completion, r.meta);
+				});
+				completeQ(r.prompt);
 			}
 		}
 	});
