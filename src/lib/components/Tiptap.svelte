@@ -11,7 +11,7 @@
 	export let note: CreekNote;
 	const index = $sessions.findIndex((session) => session.id === note.id);
 	const currentNote = derived(sessions, ($sessions) => {
-		return $sessions.find((session) => session.id === note.id);
+		return $sessions.find((session) => session.id === note.id)!;
 	});
 
 	import { useCompletion } from "ai/svelte";
@@ -31,6 +31,7 @@
 	import TidyModal from "./TidyModal.svelte";
 	import { goto } from "$app/navigation";
 	import { format } from "date-fns";
+	import CombineWithModal from "./CombineWithModal.svelte";
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
@@ -54,13 +55,12 @@
 			payload:
 				| {
 						instruction: string;
-						combineWith: string[];
 				  }
 				| false
 		) => {
 			if (!payload) return;
-			const { instruction, combineWith } = payload;
-			tidy(instruction, combineWith);
+			const { instruction } = payload;
+			tidy(instruction);
 		}
 	};
 
@@ -69,27 +69,54 @@
 
 		await new Promise<void>((resolve, _) => {
 			modalStore.trigger({
-				title: "Make a copy",
-				type: "prompt",
-				body: "Give it a name",
-				value: note.title + "- Copy",
-				valueAttr: { type: "text" },
-				response: (title: string | false) => {
-					if (!title) return;
+				title: "Combine",
+				type: "component",
+				component: {
+					ref: CombineWithModal,
+					props: {
+						currentNote: $currentNote
+					}
+				},
+				response(payload: { title: string; combineWith: string[] } | false) {
+					if (!payload) return;
+					const { title, combineWith } = payload;
+					const allNotes = $sessions
+						.filter((session) =>
+							[...combineWith, ...$currentNote.id].includes(session.id)
+						)
+						.toSorted(
+							(a, b) =>
+								new Date(a.createdAt).getTime() -
+								new Date(b.createdAt).getTime()
+						);
+
+					const combinedContent = allNotes
+						.map(
+							(note) => `# ${note.title}
+> ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm:ss")}
+
+${note.content}`
+						)
+						.join("\n\n");
+
+					const combinedMermaid = allNotes
+						.map((note) => note.mermaid)
+						.join("\n\n");
+
 					sessions.update((sessions) => {
-						if (!sessions) return [];
 						return [
 							...sessions,
 							{
 								title,
-								content: note.content,
+								content: combinedContent,
 								createdAt: new Date(),
-								id,
-								mermaid: "",
+								id: crypto.randomUUID(),
+								mermaid: combinedMermaid,
 								tidied: false
 							}
 						];
 					});
+
 					resolve();
 				}
 			});
@@ -184,29 +211,14 @@
 			}
 		};
 	});
-	export async function tidy(instruction: string, combineWith: string[]) {
+	export async function tidy(instruction: string) {
 		editor.setEditable(false);
 		const text = editor.storage.markdown.getMarkdown();
-
-		const allTexts = $sessions
-			.filter((session) => combineWith.includes(session.id))
-			.map(
-				(session) => `${format(
-					new Date(session.createdAt),
-					"yyyy MMM dd - HH:mm:ss"
-				)}:${session.title}
-
-${session.content}`
-			)
-			.join("\n\n");
 
 		const textWithInstruction = `[ORIGINAL TEXT]
 		${format(new Date(), "yyyy-MM-dd")}:${note.title}
 		
 ${text}
-
-[COMBINE WITH]
-${combineWith.length > 0 ? allTexts : "(No combine requests)"}
 
 [REVISE WITH ADDITIONAL INSTRUCTION (OVERRIDE ORIGINAL INSTRUCTION)]
 ${instruction}`;
@@ -219,8 +231,16 @@ ${instruction}`;
 	}
 
 	function deleteThis() {
-		sessions.update((sessions) => {
-			return sessions.filter((session) => session.id !== note.id);
+		modalStore.trigger({
+			title: "Deleting: " + note.title,
+			body: "This will <strong>instantly</strong> delete the note!",
+			type: "confirm",
+			response(r) {
+				if (r)
+					sessions.update((sessions) => {
+						return sessions.filter((session) => session.id !== note.id);
+					});
+			}
 		});
 
 		goto("/notes");
