@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
 	import Mermaid from "$lib/components/Mermaid.svelte";
 	import Tiptap from "$lib/components/Tiptap.svelte";
 	import { TabGroup, Tab } from "@skeletonlabs/skeleton";
@@ -9,24 +10,24 @@
 
 	export let data;
 
-	const note = data.note;
+	const { note, folder, session } = data;
 
 	let tabSet = 0;
 </script>
 
 <svelte:head>
-	<title>Note - {$note?.title ?? "Not found"}</title>
+	<title>Note - {note.title ?? "Not found"}</title>
 	<meta name="description" content="Your saved notes" />
 </svelte:head>
 
 <section class="container self-stretch md:p-12 flex flex-col">
 	<div class="flex items-center mb-4 gap-4">
-		<a href="/notes" class="btn-icon-lg">
+		<a href="/local" class="btn-icon-lg">
 			<IconArrowLeft />
 		</a>
 		<div class="space-y-2">
-			<h1 class="h1">{$note?.title ?? "(Untitled)"}</h1>
-			<p>{format(new Date($note.createdAt), "yyyy MMM dd - HH:mm")}</p>
+			<h1 class="h1">{note?.title ?? "(Untitled)"}</h1>
+			<p>{format(new Date(note.createdAt), "yyyy MMM dd - HH:mm")}</p>
 		</div>
 	</div>
 	<div
@@ -40,9 +41,9 @@
 			<!-- Tab Panels --->
 			<svelte:fragment slot="panel">
 				{#if tabSet === 0}
-					<Tiptap note={$note} />
+					<Tiptap {note} {folder} />
 				{:else if tabSet === 1}
-					<Mermaid note={$note} />
+					<Mermaid {note} {session} />
 				{/if}
 			</svelte:fragment>
 		</TabGroup>

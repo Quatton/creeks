@@ -12,7 +12,6 @@ export const sessions = localStorageStore<CreekNote[]>("sessions", []);
 export const getNoteStore: (id: string) => Writable<CreekNote> = (id) => {
 	const note = derived(sessions, ($sessions) => {
 		const index = $sessions.findIndex((session) => session.id === id);
-		if (index === -1) throw new Error("Note not found");
 		return $sessions[index];
 	});
 

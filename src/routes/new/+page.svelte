@@ -90,7 +90,7 @@
 				});
 				const id = $currentSession?.id;
 				if (!id) return;
-				goto(`/notes/${id}`);
+				goto(`/local/${id}`);
 				toggleMode();
 				saveAndEndSession();
 			} else {

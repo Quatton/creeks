@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getNoteStore, sessions } from "$lib/stores/core";
-	import type { CreekNote } from "$lib/types/core";
+	import type { CreekNote, SharedNote } from "$lib/types/core";
 	import { mermaidParse, mermaidRender } from "$lib/utils/mermaid";
 	import {
 		modeCurrent,
@@ -14,7 +14,9 @@
 	import panzoom from "svg-pan-zoom";
 	import MermaidModal from "./MermaidModal.svelte";
 	import { get, type Unsubscriber } from "svelte/store";
-	export let note: CreekNote;
+
+	export let note: CreekNote | SharedNote;
+	export let session: Session | null;
 
 	import LucideAxis3d from "~icons/lucide/axis-3d";
 	import LucideLoader2 from "~icons/lucide/loader-2";
@@ -24,8 +26,10 @@
 
 	import { clipboard } from "@skeletonlabs/skeleton";
 	import LucideFiles from "~icons/lucide/files";
+	import type { Session } from "@supabase/supabase-js";
 
-	const currentNote = getNoteStore(note.id);
+	export let folder: "local" | "shared" = "local";
+	const currentNote = folder === "local" ? getNoteStore(note.id) : null;
 
 	let unsub: Unsubscriber = () => {};
 	const { completion: completionM, complete: completeM } = useCompletion({
@@ -74,6 +78,8 @@
 	let prevBranch = "";
 
 	function injectBranch(snapshot: string, completion: string, r: string) {
+		if (!$currentNote) return;
+
 		const result = completion.replace(/`/g, "");
 
 		// if it hasn't end yet, put premature `end` to the end
@@ -82,6 +88,7 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 	}
 
 	function injectQuestion(snapshot: string, completion: string, r: string) {
+		if (!$currentNote) return;
 		const result = completion.replace(/`/g, "");
 
 		// if it hasn't end yet, put premature `end` to the end
@@ -92,33 +99,48 @@ ${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
 	let mermaid: HTMLDivElement;
 	let pzoom: typeof panzoom | undefined;
 
-	let nodes: NodeListOf<SVGElement>;
+	let nodes: NodeListOf<SVGElement> | undefined;
 	let edges: NodeListOf<SVGElement>;
 
 	let shouldFix = false;
 
+	let ultraSpecificCounterThatWillHelpMeDetermineIfIshouldResizeThePzoom = true;
+
+	$: {
+		if (
+			ultraSpecificCounterThatWillHelpMeDetermineIfIshouldResizeThePzoom &&
+			pzoom
+		) {
+			pzoom.resize();
+			pzoom.reset();
+			ultraSpecificCounterThatWillHelpMeDetermineIfIshouldResizeThePzoom =
+				false;
+		}
+	}
+
 	onMount(() => {
-		if ($currentNote.mermaid === "") {
+		code = $currentNote?.mermaid ?? note.mermaid;
+		if ($currentNote?.mermaid === "") {
 			genFlowchart();
 		} else {
-			mermaidParse($currentNote.mermaid).then((t) => {
-				shouldFix = !t;
-			});
+			if ($currentNote)
+				mermaidParse($currentNote.mermaid).then((t) => {
+					shouldFix = !t;
+				});
 		}
-		setTimeout(() => {
-			pzoom?.resize();
-			pzoom?.reset();
-		}, 0);
 		return () => {
-			nodes.forEach((node) => {
+			nodes?.forEach((node) => {
 				node.removeEventListener("click", clickNode(node));
 			});
 		};
 	});
 
 	async function fixFlowchart() {
+		if (!$currentNote) return;
+
 		const unsub = completionF.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
+			if (!$currentNote) return;
 			$currentNote.mermaid = result;
 		});
 
@@ -133,9 +155,12 @@ ${$currentNote.mermaid}`).then(() => {
 	}
 
 	async function genFlowchart() {
+		if (!$currentNote) return;
+
 		shouldFix = false;
 		unsub = completionM.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
+			if (!$currentNote) return;
 			$currentNote.mermaid = result;
 		});
 
@@ -147,12 +172,16 @@ ${$currentNote.mermaid}`).then(() => {
 	}
 
 	let id: NodeJS.Timeout | undefined;
-	$: code = $currentNote.mermaid;
+
+	let code: string;
 	$: {
-		id && clearTimeout(id);
-		id = setTimeout(() => {
-			shouldFix = true;
-		}, 5000);
+		if ($currentNote) code = $currentNote.mermaid;
+	}
+	$: {
+		// id && clearTimeout(id);
+		// id = setTimeout(() => {
+		// 	shouldFix = true;
+		// }, 5000);
 		mermaidParse(code).then(async (t) => {
 			if (t) {
 				const { svg } = await mermaidRender(
@@ -167,8 +196,8 @@ ${$currentNote.mermaid}`).then(() => {
 				const graphDiv = document.querySelector("svg#graph-div");
 				graphDiv?.attributes.removeNamedItem("style");
 				bindClicks();
-				clearTimeout(id);
-				shouldFix = false;
+				// clearTimeout(id);
+				// shouldFix = false;
 			}
 		});
 	}
@@ -178,7 +207,9 @@ ${$currentNote.mermaid}`).then(() => {
 		pzoom = undefined;
 
 		void Promise.resolve().then(() => {
-			const { pan, zoom } = get(currentNote).mermaidConfig ?? {
+			const { pan, zoom } = ($currentNote
+				? $currentNote.mermaidConfig
+				: null) ?? {
 				pan: undefined,
 				zoom: undefined
 			};
@@ -206,13 +237,16 @@ ${$currentNote.mermaid}`).then(() => {
 		const pan = pzoom.getPan();
 		const zoom = pzoom.getZoom();
 
-		$currentNote.mermaidConfig = {
-			pan,
-			zoom
-		};
+		if ($currentNote)
+			$currentNote.mermaidConfig = {
+				pan,
+				zoom
+			};
 	};
 
 	function bindClicks() {
+		if (!$currentNote) return;
+
 		nodes = document.querySelectorAll("g.node");
 		nodes.forEach((node) => {
 			node.classList.add("cursor-pointer");
@@ -240,7 +274,7 @@ ${$currentNote.mermaid}`).then(() => {
 			ref: MermaidModal,
 			props: {
 				node,
-				noteId: $currentNote.id
+				noteId: $currentNote!.id // if error here, it's because currentNote is null
 			}
 		};
 	};
@@ -252,6 +286,7 @@ ${$currentNote.mermaid}`).then(() => {
 		component: modalComponent(node),
 		response(r) {
 			if (!r) return;
+			if (!currentNote) return;
 			if (r.action === "branch") {
 				const snapshot = get(currentNote).mermaid;
 				const unsub = completion.subscribe((completion) => {
@@ -271,8 +306,7 @@ ${$currentNote.mermaid}`).then(() => {
 		}
 	});
 
-	import { getToastStore } from "@skeletonlabs/skeleton";
-	import { set } from "date-fns";
+	let switchAxisForOthers: "TD" | "LR" = "TD";
 </script>
 
 <svelte:window
@@ -299,15 +333,23 @@ ${$currentNote.mermaid}`).then(() => {
 			class="btn-icon"
 			on:click={() => {
 				// graph the first line of mermaid
-				const firstLine = $currentNote.mermaid.split("\n")[0];
+				if ($currentNote) {
+					const firstLine = $currentNote.mermaid.split("\n")[0];
 
-				// change TD to LR and vice versa
-				const newLine = firstLine.includes("TD")
-					? firstLine.replace("TD", "LR")
-					: firstLine.replace("LR", "TD");
+					// change TD to LR and vice versa
+					const newLine = firstLine.includes("TD")
+						? firstLine.replace("TD", "LR")
+						: firstLine.replace("LR", "TD");
 
-				$currentNote.mermaid =
-					newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
+					$currentNote.mermaid =
+						newLine +
+						"\n" +
+						$currentNote.mermaid.split("\n").slice(1).join("\n");
+				} else {
+					switchAxisForOthers = switchAxisForOthers === "TD" ? "LR" : "TD";
+					code = `graph ${switchAxisForOthers}
+${code.split("\n").slice(1).join("\n")}`;
+				}
 
 				setTimeout(() => {
 					pzoom?.resize();
@@ -318,7 +360,7 @@ ${$currentNote.mermaid}`).then(() => {
 			<LucideAxis3d class="w-6 h-6" />
 		</button>
 
-		<button class="btn-icon" use:clipboard={$currentNote.mermaid}>
+		<button class="btn-icon" use:clipboard={$currentNote?.mermaid ?? ""}>
 			<LucideClipboardCopy class="w-6 h-6" />
 		</button>
 

@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { onMount, onDestroy } from "svelte";
+	import { onMount } from "svelte";
 	import { Editor } from "@tiptap/core";
 	import StarterKit from "@tiptap/starter-kit";
-	import type { CreekNote } from "$lib/types/core";
+	import type { CreekNote, SharedNote } from "$lib/types/core";
 	import { getNoteStore, sessions } from "$lib/stores/core";
 	import { Markdown } from "tiptap-markdown";
 	let element: HTMLDivElement;
 	let editor: InstanceType<typeof Editor>;
 
-	export let note: CreekNote;
-	const currentNote = getNoteStore(note.id);
+	export let folder: "local" | "shared" = "local";
+	export let note: CreekNote | SharedNote;
+
+	const currentNote = folder === "local" ? getNoteStore(note.id) : null;
 
 	import { useCompletion } from "ai/svelte";
 	import { cn } from "$lib/utils/cn";
@@ -18,17 +20,23 @@
 	import LucideSparkles from "~icons/lucide/sparkles";
 	import LucideCopy from "~icons/lucide/copy";
 	import LucideTrash2 from "~icons/lucide/trash-2";
+	import LucideShare2 from "~icons/lucide/share-2";
 
 	import {
 		getModalStore,
-		popup,
-		type ModalComponent,
-		type ModalSettings
+		type ModalSettings,
+		clipboard
 	} from "@skeletonlabs/skeleton";
 	import TidyModal from "./TidyModal.svelte";
 	import { goto } from "$app/navigation";
 	import { format } from "date-fns";
 	import CombineWithModal from "./CombineWithModal.svelte";
+	import { supabase } from "$lib/supabase/client";
+	import { page } from "$app/stores";
+	import SignInModal from "./SignInModal.svelte";
+	import type { Session } from "@supabase/supabase-js";
+
+	const session = derived(page, ($page) => $page.data.session);
 
 	const { completion, complete } = useCompletion({
 		api: "/api/completion",
@@ -62,6 +70,8 @@
 	};
 
 	async function triggerCopyModalHelper() {
+		if (!currentNote) return;
+
 		const id = crypto.randomUUID();
 
 		await new Promise<void>((resolve, _) => {
@@ -79,7 +89,7 @@
 					const { title, combineWith } = payload;
 					const allNotes = $sessions
 						.filter((session) =>
-							[...combineWith, $currentNote.id].includes(session.id)
+							[...combineWith, $currentNote?.id].includes(session.id)
 						)
 						.toSorted(
 							(a, b) =>
@@ -119,7 +129,7 @@ ${note.content}`
 			});
 		});
 
-		await goto(`/notes/${id}`);
+		await goto(`/local/${id}`);
 	}
 
 	onMount(() => {
@@ -172,6 +182,7 @@ ${note.content}`
 			onTransaction: ({ editor }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
+				if (!$currentNote) return;
 				$currentNote.content = editor.storage.markdown.getMarkdown();
 			}
 		});
@@ -184,6 +195,7 @@ ${note.content}`
 		// 		to: editor.state.selection.to
 		// 	})
 		// 	.run();
+		if (folder === "shared") editor.setEditable(false);
 
 		return () => {
 			unsub();
@@ -193,6 +205,8 @@ ${note.content}`
 		};
 	});
 	export async function tidy(instruction: string) {
+		if (folder === "shared") return;
+
 		editor.setEditable(false);
 		const text = editor.storage.markdown.getMarkdown();
 
@@ -203,11 +217,12 @@ ${text}
 ${instruction}
 - Don't have to include [REVISED TEXT] in your response`;
 		await complete(textWithInstruction);
-		$currentNote.tidied = true;
 		editor.setEditable(true);
 	}
 
 	async function deleteThis() {
+		if (!currentNote) return;
+
 		const res = await new Promise<boolean>((response, _) =>
 			modalStore.trigger({
 				title: "Deleting: " + note.title,
@@ -218,11 +233,59 @@ ${instruction}
 		);
 
 		if (res) {
-			await goto("/notes");
+			await goto("/local");
 			sessions.update((sessions) => {
 				return sessions.filter((session) => session.id !== note.id);
 			});
 		}
+	}
+
+	async function shareNote() {
+		if (!$currentNote) return;
+
+		if ("tidied" in $currentNote) {
+			const { tidied, ...note } = $currentNote;
+			$currentNote = note;
+		}
+
+		const { id, mermaidConfig, createdAt, ...note } = $currentNote;
+
+		if (!$session) {
+			await new Promise<Session | null>((response, _) =>
+				modalStore.trigger({
+					type: "component",
+					component: {
+						ref: SignInModal
+					},
+					response
+				})
+			);
+		}
+
+		if (!$session) return;
+
+		const { data, error } = await supabase
+			.from("shared_notes")
+			.upsert({
+				...note,
+				local_id: id,
+				author_id: $session.user.id,
+				createdAt: new Date(createdAt).toLocaleDateString()
+			})
+			.eq("local_id", id)
+			.select()
+			.single();
+
+		if (!data) {
+			console.error(error);
+			return;
+		}
+
+		const { id: got_shared_id } = data;
+
+		$currentNote.shared_id = got_shared_id;
+
+		await goto(`/shared/${got_shared_id}`);
 	}
 </script>
 
@@ -237,32 +300,62 @@ ${instruction}
 
 <div class="flex flex-col h-full gap-2 p-4">
 	<div class="flex gap-2">
-		<button
-			class="btn btn-sm variant-ghost"
-			on:click={() => {
-				modalStore.trigger(modal);
-			}}
-		>
-			<span>
-				<LucideSparkles class="w-4 h-4" />
-			</span>
-			<span>Tidy</span>
-		</button>
+		{#if folder === "local"}
+			<button
+				class="btn btn-sm variant-ghost"
+				on:click={() => {
+					modalStore.trigger(modal);
+				}}
+			>
+				<span>
+					<LucideSparkles class="w-4 h-4" />
+				</span>
+				<span>Tidy</span>
+			</button>
+		{/if}
 		<button class="btn btn-sm variant-ghost" on:click={triggerCopyModalHelper}>
 			<span>
 				<LucideCopy class="w-4 h-4" />
 			</span>
 			<span>Make a copy</span>
 		</button>
-		<button
-			class="btn btn-sm variant-ghost"
-			on:click|preventDefault={deleteThis}
-		>
-			<span>
-				<LucideTrash2 class="w-4 h-4" />
-			</span>
-			<span>Delete</span>
-		</button>
+		{#if folder === "local"}
+			<button class="btn btn-sm variant-ghost" on:click={deleteThis}>
+				<span>
+					<LucideTrash2 class="w-4 h-4" />
+				</span>
+				<span>Delete</span>
+			</button>
+		{/if}
+		{#if folder === "local"}
+			<button
+				class="btn btn-sm variant-ghost"
+				on:click={() =>
+					modalStore.trigger({
+						title: "Share note",
+						body: "This will share the note with the world! (Publicly, for now)",
+						type: "confirm",
+						response: (r) => {
+							if (r) shareNote();
+						}
+					})}
+			>
+				<span>
+					<LucideShare2 class="w-4 h-4" />
+				</span>
+				<span>Share</span>
+			</button>
+		{:else}
+			<button
+				class="btn btn-sm variant-ghost"
+				use:clipboard={$page.url.toString()}
+			>
+				<span>
+					<LucideCopy class="w-4 h-4" />
+				</span>
+				<span>Copy Share Link</span>
+			</button>
+		{/if}
 	</div>
 	<div class="overflow-y-auto">
 		<div bind:this={element} />

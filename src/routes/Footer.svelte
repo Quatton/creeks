@@ -5,7 +5,7 @@
 
 	const links = [
 		{
-			href: "/notes",
+			href: "/local",
 			Icon: IconBookMarked
 		},
 		{
