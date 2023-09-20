@@ -27,15 +27,33 @@
 
 	let unsub: Unsubscriber = () => {};
 	const { completion: completionM, complete: completeM } = useCompletion({
-		api: "/api/mermaid"
+		api: "/api/mermaid",
+		onFinish: (_, completion) => {
+			setTimeout(() => {
+				pzoom?.resize();
+				pzoom?.reset();
+			});
+		}
 	});
 
-	const { complete, completion } = useCompletion({
-		api: "/api/branch"
+	const { complete, completion, stop } = useCompletion({
+		api: "/api/branch",
+		onFinish: (_, completion) => {
+			setTimeout(() => {
+				pzoom?.resize();
+				pzoom?.reset();
+			});
+		}
 	});
 
 	const { complete: completeF, completion: completionF } = useCompletion({
-		api: "/api/fix"
+		api: "/api/fix",
+		onFinish: (_, completion) => {
+			setTimeout(() => {
+				pzoom?.resize();
+				pzoom?.reset();
+			});
+		}
 	});
 
 	function injectBranch(snapshot: string, completion: string, r: string) {
@@ -87,6 +105,7 @@ ${$currentNote.mermaid}`).then(() => {
 	}
 
 	async function genFlowchart() {
+		shouldFix = false;
 		unsub = completionM.subscribe((completion) => {
 			const result = completion.replace(/`/g, "");
 			$currentNote.mermaid = result;
@@ -117,6 +136,8 @@ ${$currentNote.mermaid}`).then(() => {
 				);
 				setupPanzoom();
 				mermaid.innerHTML = svg;
+				const graphDiv = document.querySelector("svg#graph-div");
+				graphDiv?.attributes.removeNamedItem("style");
 				bindClicks();
 				clearTimeout(id);
 				shouldFix = false;
@@ -140,6 +161,7 @@ ${$currentNote.mermaid}`).then(() => {
 				beforeZoom: handlePanZoomChange,
 				controlIconsEnabled: true,
 				zoomScaleSensitivity: 0.2,
+				minZoom: 0.1,
 				maxZoom: Infinity
 			});
 			if (!!pan && !!zoom && Number.isFinite(zoom)) {
@@ -201,6 +223,7 @@ ${$currentNote.mermaid}`).then(() => {
 		type: "component",
 		component: modalComponent(node),
 		response(r) {
+			if (!r) return;
 			if (r.action === "branch") {
 				const snapshot = get(currentNote).mermaid;
 				const unsub = completion.subscribe((completion) => {
@@ -210,14 +233,14 @@ ${$currentNote.mermaid}`).then(() => {
 				});
 				complete(r.prompt).then(() => {
 					unsub();
+					stop();
 				});
 			}
 		}
 	});
 
 	import { getToastStore } from "@skeletonlabs/skeleton";
-
-	const toastStore = getToastStore();
+	import { set } from "date-fns";
 </script>
 
 <svelte:window
@@ -234,7 +257,10 @@ ${$currentNote.mermaid}`).then(() => {
 />
 
 <div class="relative grow flex flex-col">
-	<div bind:this={mermaid} class="grow [&_>_#graph-div]:h-full overflow-auto" />
+	<div
+		bind:this={mermaid}
+		class="grow [&_>_#graph-div]:w-full [&_>_#graph-div]:h-full overflow-auto"
+	/>
 
 	<div class="flex gap-2 items-center">
 		<button
@@ -250,6 +276,11 @@ ${$currentNote.mermaid}`).then(() => {
 
 				$currentNote.mermaid =
 					newLine + "\n" + $currentNote.mermaid.split("\n").slice(1).join("\n");
+
+				setTimeout(() => {
+					pzoom?.reset();
+					pzoom?.resize();
+				}, 0);
 			}}
 		>
 			<LucideAxis3d class="w-6 h-6" />
@@ -262,7 +293,7 @@ ${$currentNote.mermaid}`).then(() => {
 		<button
 			class="btn-icon"
 			on:click={() => {
-				if (shouldFix) fixFlowchart();
+				fixFlowchart();
 				shouldFix = false;
 			}}
 		>
