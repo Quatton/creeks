@@ -7,6 +7,8 @@
 	import LucideGitBranchPlus from "~icons/lucide/git-branch-plus";
 	import LucideTrash2 from "~icons/lucide/trash-2";
 	import LucideBomb from "~icons/lucide/bomb";
+	import LucideHelpingHand from "~icons/lucide/helping-hand";
+
 	import { useCompletion } from "ai/svelte";
 
 	export let node: {
@@ -22,7 +24,7 @@
 	const modalStore = getModalStore();
 	const noteStore = getNoteStore(noteId);
 
-	const submodal: ModalSettings = {
+	const branchSubmodal: ModalSettings = {
 		body: "Anything to ask for specifically?",
 		type: "prompt",
 		value: "Could you elaborate on that?",
@@ -34,6 +36,25 @@
 				prompt: `${$noteStore.mermaid}
 
 node to branch from: ${node.id}("${node.label}")
+additional instruction: ${r}`,
+				meta: r
+			});
+			modalStore.clear();
+		}
+	};
+
+	const askSubmodal: ModalSettings = {
+		body: "Any specific instruction?",
+		type: "prompt",
+		value: "Guide me what to write next",
+		valueAttr: { type: "text" },
+		response(r: string) {
+			if (!r) return;
+			$modalStore[1].response?.({
+				action: "ask",
+				prompt: `${$noteStore.mermaid}
+
+node to ask: ${node.id}("${node.label}")
 additional instruction: ${r}`,
 				meta: r
 			});
@@ -113,7 +134,7 @@ additional instruction: ${r}`,
 		<button
 			class="btn variant-filled-surface"
 			on:click={() => {
-				modalStore.update((modals) => [submodal, ...modals]);
+				modalStore.update((modals) => [branchSubmodal, ...modals]);
 			}}
 		>
 			<span>
@@ -121,6 +142,20 @@ additional instruction: ${r}`,
 			</span>
 			<span
 				>Branch a subgraph
+				<span class="chip variant-soft-primary">AI</span>
+			</span>
+		</button>
+		<button
+			class="btn variant-filled-surface"
+			on:click={() => {
+				modalStore.update((modals) => [askSubmodal, ...modals]);
+			}}
+		>
+			<span>
+				<LucideHelpingHand class="w-4 h-4" />
+			</span>
+			<span
+				>Guide me what to write next
 				<span class="chip variant-soft-primary">AI</span>
 			</span>
 		</button>

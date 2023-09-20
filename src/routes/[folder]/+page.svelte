@@ -48,7 +48,7 @@
 		source={$sessionTable}
 		interactive
 		on:selected={(e) => {
-			goto(`/notes/${e.detail[0]}`);
+			goto(`/local/${e.detail[0]}`);
 		}}
 	/>
 </section>

@@ -1,3 +1,5 @@
+import type { Database } from "./supabase";
+
 export type CreekSession = {
 	id: string;
 	createdAt: Date;
@@ -14,13 +16,15 @@ export type CreekNote = {
 	createdAt: Date;
 	title: string;
 	content: string;
-	tidied: boolean;
+	shared_id?: string;
 	mermaid: string;
 	mermaidConfig?: {
 		pan: ReturnType<ReturnType<typeof svgPanZoom>["getPan"]>;
 		zoom: ReturnType<ReturnType<typeof svgPanZoom>["getZoom"]>;
 	};
 };
+
+export type SharedNote = Database["public"]["Tables"]["shared_notes"]["Row"];
 
 export type CreekBlock = {
 	createdAt: Date;
