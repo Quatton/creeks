@@ -49,7 +49,9 @@ a1 -->|"What kind of exercise should I do?"| a1_1("...")
 If the user input their text in a language other than English, please output the flowchart in the same language.
 
 [CAUTION]
-Do not fill the destination node label by yourself. Leave it ... but don't leave it blank or it will not appear`.trim();
+Do not fill the destination node label by yourself. Leave it ... but don't leave it blank or it will not appear.
+Don't forget quotation marks around the label.
+`.trim();
 
 const USER_PROMPT = (prompt: string) =>
 	`${prompt ? prompt : "(no prompt please return only empty string)"}
