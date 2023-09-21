@@ -105,9 +105,9 @@ ${note.content}`
 						)
 						.join("\n\n")}`;
 
-					const combinedMermaid = [...allNotes, note]
-						.map((note) => note.mermaid)
-						.join("\n\n");
+					// const combinedMermaid = [...allNotes, note]
+					// 	.map((note) => note.mermaid)
+					// 	.join("\n\n");
 
 					sessions.update((sessions) => {
 						return [
@@ -117,7 +117,7 @@ ${note.content}`
 								content: combinedContent,
 								createdAt: new Date(),
 								id,
-								mermaid: combinedMermaid,
+								mermaid: "",
 								tidied: false
 							}
 						];
