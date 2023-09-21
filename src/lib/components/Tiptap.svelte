@@ -86,7 +86,7 @@
 				response(payload: { title: string; combineWith: string[] } | false) {
 					if (!payload) return;
 					const { title, combineWith } = payload;
-					const allNotes = $sessions
+					let allNotes: (CreekNote | SharedNote)[] = $sessions
 						.filter((session) => combineWith.includes(session.id))
 						.toSorted(
 							(a, b) =>
@@ -94,11 +94,9 @@
 								new Date(b.createdAt).getTime()
 						);
 
-					const combinedContent = `${
-						$currentNote ? $currentNote.content : note.content
-					}
+					allNotes = [$currentNote ? $currentNote : note, ...allNotes];
 
-					${allNotes
+					const combinedContent = `${allNotes
 						.map(
 							(note) => `# ${note.title}
 > ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm")}
