@@ -84,7 +84,7 @@
 
 		// if it hasn't end yet, put premature `end` to the end
 		$currentNote.mermaid = `${snapshot}
-	${result}${result.trim().split("\n").at(-1) !== "end" ? "\nend" : ""}`;
+	${result}${/end/.test(result.trim().split("\n").at(-1) ?? "") ? "\nend" : ""}`;
 	}
 
 	function injectQuestion(snapshot: string, completion: string, r: string) {
