@@ -154,10 +154,6 @@ ${note.content}`
 
 		// onMount(async () => {
 
-		const unsub = completion.subscribe((completion) => {
-			if (completion.length > 0) editor.commands.setContent(completion);
-		});
-
 		editor = new Editor({
 			element: element,
 			editorProps: {
@@ -201,13 +197,16 @@ ${note.content}`
 		if (folder === "shared") editor.setEditable(false);
 
 		return () => {
-			unsub();
 			if (editor) {
 				editor.destroy();
 			}
 		};
 	});
 	export async function tidy(instruction: string) {
+		const unsub = completion.subscribe((completion) => {
+			if (completion.length > 0) editor.commands.setContent(completion);
+		});
+
 		if (folder === "shared") return;
 
 		editor.setEditable(false);

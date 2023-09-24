@@ -50,6 +50,10 @@ Make sure you don't leave any edge blank.
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.
+
+[CAUTION]
+You should escape ", (, and ) with backslash or else it will break the Mermaid.
+You shouldn't layer two subgraphs together. You should only branch from the main graph.
 `.trim();
 
 const USER_PROMPT = (prompt: string) =>
