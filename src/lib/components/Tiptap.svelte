@@ -70,6 +70,8 @@
 		}
 	};
 
+	// $: console.log($currentNote?.content);
+
 	async function triggerCopyModalHelper() {
 		const id = crypto.randomUUID();
 
@@ -179,22 +181,23 @@ ${note.content}`
 				})
 			],
 			content: note.content,
-			onTransaction: ({ editor }) => {
+			onTransaction: ({ editor, transaction }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
-				if (!$currentNote) return;
+				if (!$currentNote || transaction.docChanged) return;
 				$currentNote.content = editor.storage.markdown.getMarkdown();
 			}
 		});
-		// editor.commands.selectAll();
-		// editor
-		// 	.chain()
-		// 	.focus(editor.state.selection.to)
-		// 	.setTextSelection({
-		// 		from: editor.state.selection.to,
-		// 		to: editor.state.selection.to
-		// 	})
-		// 	.run();
+		editor.commands;
+		editor
+			.chain()
+			.selectAll()
+			.focus(editor.state.selection.to)
+			.setTextSelection({
+				from: editor.state.selection.to,
+				to: editor.state.selection.to
+			})
+			.run();
 		if (folder === "shared") editor.setEditable(false);
 
 		return () => {
