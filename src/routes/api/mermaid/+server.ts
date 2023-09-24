@@ -26,22 +26,23 @@ You will do this by starting from the root node (goal) and helping the user to i
 6. Start from goal("GOAL") --> node1("...") then node1 --> node2("...") and so on.
 7. If you have suggestions the user didn't mention, feel free to do so. But use the syntax: node1 -->|"Suggested✨"| node2("...") and so on.
 8. Use graph TD first and then switch to subgraph with direction LR if there're too many nodes. This is to prevent the graph from being too wide.
+9. You can use markdown syntax inside the label by using backticks.
 
 [EXAMPLE]
 graph TD
-	goal("I want to lose weight") -->|"But..."| o1("I don't have time to exercise")
-	o1 -->|"To solve this"| a1("Spare 30 minutes earlier to exercise")
-	o1 -->|"Suggested✨"| a2("Try to track calories")
+	goal(\`I want to lose weight\`) -->|\`But...\`| o1(\`I don't have time to exercise\`)
+	o1 -->|\`To solve this\`| a1(\`Spare 30 minutes earlier to exercise\`)
+	o1 -->|\`**Suggested✨**\`| a2(\`Try to track calories\`)
 	subgraph exercise
 	direction LR
-		a1 -->|"If you want cardio"| a1_1("Jogging")
-		a1 -->|"If you want to build muscle"| a1_2("Weight lifting")
-		a1 -->|"If you want to improve your mobility"| a1_3("Yoga")
-		a1_2 -->|"1st major exercise"| a1_2_1("Bench press")
-		a1_2 -->|"2nd major exercise"| a1_2_2("Squat")
-		a1_2 -->|"3rd major exercise"| a1_2_3("Deadlift")
+		a1 -->|\`If you want cardio\`| a1_1(\`Jogging\`)
+		a1 -->|\`If you want to build muscle\`| a1_2(\`Weight lifting\`)
+		a1 -->|\`If you want to improve your mobility\`| a1_3(\`Yoga\`)
+		a1_2 -->|\`1st major exercise\`| a1_2_1(\`Bench press\`)
+		a1_2 -->|\`2nd major exercise\`| a1_2_2(\`Squat\`)
+		a1_2 -->|\`3rd major exercise\`| a1_2_3(\`Deadlift\`)
 	end
-	goal -->|"Successfully"| s1("I lost 5kg last month")
+	goal -->|\`Successfully\`| s1(\`I lost 5kg last month\`)
 
 [COMMENT]
 Here o is for obstacle, a is for actionable item, and s is for success.
@@ -50,9 +51,12 @@ Make sure you don't leave any edge blank.
 
 [MULTILINGUAL SUPPORT]
 If the user input their text in a language other than English, please output the flowchart in the same language.
+Except for the subgraph name. For the subgraph name, please output it in English.
+For example, subgraph ภาษาไทย is disallowed.
 
 [CAUTION]
-You should escape ", (, and ) with backslash or else it will break the Mermaid.
+You should escape ", with backslash or else it will break the Mermaid.
+Don't use any kinds of parentheses inside the label.
 You shouldn't layer two subgraphs together. You should only branch from the main graph.
 `.trim();
 
