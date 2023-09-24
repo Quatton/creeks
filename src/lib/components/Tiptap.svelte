@@ -180,7 +180,7 @@ ${note.content}`
 			onTransaction: ({ editor, transaction }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
-				if (!$currentNote || transaction.docChanged) return;
+				if (!$currentNote || !transaction.docChanged) return;
 				$currentNote.content = editor.storage.markdown.getMarkdown();
 			}
 		});
