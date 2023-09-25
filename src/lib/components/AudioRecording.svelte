@@ -207,6 +207,10 @@
 			reader.readAsDataURL($recordingBlob!);
 		}
 	}
+
+	$: {
+		if ($recordingTime >= 10) pushAudio();
+	}
 </script>
 
 {#if $isRecording}

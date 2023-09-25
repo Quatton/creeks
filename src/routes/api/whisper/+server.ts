@@ -60,13 +60,12 @@ function blocksToFiles(session: CreekSession): {
 						type: "audio/webm"
 					}
 				);
+				const reference = session.blocks
+					.slice(i)
+					.find((block) => block.type === "text");
 				return {
 					file,
-					prompt: `${session.title} ${
-						session.blocks.at(i + 1)?.type === "text"
-							? session.blocks[i + 1].content
-							: ""
-					}`
+					prompt: `${session.title} ${reference ? reference.content : ""}`
 				};
 			} else {
 				return null;

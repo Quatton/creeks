@@ -38,6 +38,8 @@
 	let timer: NodeJS.Timer | null = null;
 
 	async function saveAndEndSession() {
+		timer && clearInterval(timer);
+		timer = null;
 		snapshot = get(currentSession);
 		if (!snapshot) return;
 
@@ -148,6 +150,8 @@
 			if (response) {
 				if ($currentSession?.record) audioRecorder.stopRecording?.();
 				currentSession.set(null);
+				timer && clearInterval(timer);
+				timer = null;
 			}
 		}
 	};
@@ -197,7 +201,7 @@
 						currentSession.update((session) => {
 							if (!session) return null;
 							if (session.time === 0) {
-								if ($currentSession?.record) {
+								if (session.record) {
 									audioRecorder.pushAudio?.();
 									audioRecorder.stopRecording?.();
 								}
