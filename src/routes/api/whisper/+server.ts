@@ -10,7 +10,6 @@ const openai = new OpenAI({
 export async function POST({ request }) {
 	const { session } = await request.json();
 
-	console.time("transcriptions");
 	const responses = await Promise.allSettled<string | null>(
 		blocksToFiles(session).map(async ({ file, prompt }) => {
 			const response = await openai.audio.transcriptions.create({
@@ -19,15 +18,9 @@ export async function POST({ request }) {
 				prompt
 			});
 
-			console.log(file.size);
-
 			return response.text;
 		})
 	);
-	console.timeEnd("transcriptions");
-
-	console.time("post processing");
-
 	const texts = responses.map((response) => {
 		if (response.status === "fulfilled") {
 			return response.value;
@@ -49,8 +42,6 @@ export async function POST({ request }) {
 			return block;
 		}
 	});
-
-	console.timeEnd("post processing");
 
 	return json({ blocks });
 }

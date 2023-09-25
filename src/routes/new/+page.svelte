@@ -198,7 +198,6 @@
 			e.preventDefault();
 			if (record) {
 				if (!$currentSession && !timer) {
-					console.log("start?");
 					audioRecorder.startRecording();
 					timer = setInterval(() => {
 						currentSession.update((session) => {
