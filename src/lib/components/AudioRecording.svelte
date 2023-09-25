@@ -133,11 +133,15 @@
 	const convertToDownloadFileExtension = async (
 		webmBlob: Blob
 	): Promise<Blob> => {
+		if (webmBlob.type === "audio/webm") return webmBlob;
+
 		const { FFmpeg } = await import("@ffmpeg/ffmpeg");
 		const ffmpeg = new FFmpeg();
 		await ffmpeg.load();
 
-		const inputName = "input.webm";
+		const type = webmBlob.type.split("/")[1];
+
+		const inputName = "input." + type;
 		const outputName = `output.${downloadFileExtension}`;
 
 		await ffmpeg.writeFile(
@@ -204,7 +208,9 @@
 					console.error(err);
 				});
 
-			reader.readAsDataURL($recordingBlob!);
+			convertToDownloadFileExtension($recordingBlob).then((blob) => {
+				reader.readAsDataURL(blob);
+			});
 		}
 	}
 
