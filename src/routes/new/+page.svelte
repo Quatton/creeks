@@ -126,16 +126,10 @@
 
 		response: (response: boolean) => {
 			if (response) {
-				currentSession.update((session) => {
-					if (!session) return null;
-					return {
-						...session
-					};
-				});
 				const id = $currentSession?.id;
 				if (!id) return;
 				if ($currentSession?.record) {
-					audioRecorder.pushAudio(true);
+					audioRecorder.pushAudio?.(true);
 				}
 				setTimeout(async () => {
 					await saveAndEndSession();
@@ -152,7 +146,7 @@
 
 		response: (response: boolean) => {
 			if (response) {
-				if ($currentSession?.record) audioRecorder.stopRecording();
+				if ($currentSession?.record) audioRecorder.stopRecording?.();
 				currentSession.set(null);
 			}
 		}
@@ -198,14 +192,14 @@
 			e.preventDefault();
 			if (record) {
 				if (!$currentSession && !timer) {
-					audioRecorder.startRecording();
+					audioRecorder.startRecording?.();
 					timer = setInterval(() => {
 						currentSession.update((session) => {
 							if (!session) return null;
 							if (session.time === 0) {
 								if ($currentSession?.record) {
-									audioRecorder.pushAudio();
-									audioRecorder.stopRecording();
+									audioRecorder.pushAudio?.();
+									audioRecorder.stopRecording?.();
 								}
 								writer.pushAll();
 								modalStore.trigger(modal);
@@ -218,7 +212,8 @@
 					}, 1000);
 				}
 			}
-			if ($currentSession && $currentSession.record) audioRecorder.pushAudio();
+			if ($currentSession && $currentSession.record)
+				audioRecorder.pushAudio?.();
 			setTimeout(() => {
 				writer.pushAll();
 			}, 10);

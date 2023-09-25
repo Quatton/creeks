@@ -35,7 +35,7 @@
 	// );
 
 	export const pushAudio = (end = false) => {
-		if (!get(isRecording)) {
+		if (!$isRecording) {
 			console.warn("Not recording");
 			return;
 		}
