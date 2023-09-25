@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { getNoteStore, sessions } from "$lib/stores/core";
+	import { getNoteStore } from "$lib/stores/core";
 	import type { CreekNote, SharedNote } from "$lib/types/core";
 	import { mermaidParse, mermaidRender } from "$lib/utils/mermaid";
 	import {
 		modeCurrent,
 		type ModalSettings,
-		type PopupSettings,
 		type ModalComponent,
 		getModalStore
 	} from "@skeletonlabs/skeleton";
@@ -16,17 +15,12 @@
 	import { get, type Unsubscriber } from "svelte/store";
 
 	export let note: CreekNote | SharedNote;
-	export let session: Session | null;
 
 	import LucideAxis3d from "~icons/lucide/axis-3d";
-	import LucideLoader2 from "~icons/lucide/loader-2";
 	import LucideWrench from "~icons/lucide/wrench";
-	import LucideClipboardPaste from "~icons/lucide/clipboard-paste";
 	import LucideClipboardCopy from "~icons/lucide/copy";
 
 	import { clipboard } from "@skeletonlabs/skeleton";
-	import LucideFiles from "~icons/lucide/files";
-	import type { Session } from "@supabase/supabase-js";
 
 	export let folder: "local" | "shared" = "local";
 	const currentNote = folder === "local" ? getNoteStore(note.id) : null;
@@ -177,10 +171,10 @@ ${$currentNote.mermaid}`).then(() => {
 		if ($currentNote) code = $currentNote.mermaid;
 	}
 	$: {
-		// id && clearTimeout(id);
-		// id = setTimeout(() => {
-		// 	shouldFix = true;
-		// }, 5000);
+		id && clearTimeout(id);
+		id = setTimeout(() => {
+			shouldFix = true;
+		}, 5000);
 		mermaidParse(code).then(async (t) => {
 			if (t) {
 				const { svg } = await mermaidRender(
@@ -195,8 +189,8 @@ ${$currentNote.mermaid}`).then(() => {
 				const graphDiv = document.querySelector("svg#graph-div");
 				graphDiv?.attributes.removeNamedItem("style");
 				bindClicks();
-				// clearTimeout(id);
-				// shouldFix = false;
+				clearTimeout(id);
+				shouldFix = false;
 			}
 		});
 	}
@@ -373,12 +367,18 @@ ${code.split("\n").slice(1).join("\n")}`;
 			<LucideClipboardPaste class="w-6 h-6" />
 		</button> -->
 
-		<!-- <button
-			class="btn-icon"
+		<button
+			class="btn-icon {!shouldFix
+				? 'text-surface-500-400-token hover:text-surface-500-400-token'
+				: ''}"
 			on:click={() => {
-				fixFlowchart();
+				if (!shouldFix) {
+					return;
+				}
+				genFlowchart();
 				shouldFix = false;
 			}}
+			disabled={!shouldFix}
 		>
 			<LucideWrench class="w-6 h-6" />
 		</button>
@@ -387,7 +387,7 @@ ${code.split("\n").slice(1).join("\n")}`;
 			<span class="text-sm">
 				This flowchart is broken. Please click the wrench icon to fix it.
 			</span>
-		{/if} -->
+		{/if}
 
 		<!-- 
 		{#if isLoadingM}

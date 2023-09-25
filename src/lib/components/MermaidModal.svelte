@@ -16,7 +16,7 @@
 		label: string;
 	};
 
-	export let parent: any;
+	// export let parent: any;
 	export let noteId: string;
 
 	let label = node.label;
