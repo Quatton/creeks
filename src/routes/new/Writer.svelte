@@ -21,26 +21,25 @@
 					id: crypto.randomUUID(),
 					createdAt: new Date(),
 					title: text,
-					mode: "flow",
-					// blocks: [],
-					content: "",
+					blocks: [],
+					// content: "",
 					tidied: false,
 					time: -1
 				};
 			}
 			return {
 				...session,
-				content:
-					session.content.at(-1) === "\n"
-						? session.content + text
-						: session.content + "\n" + text
-				// blocks: [
-				// 	...session.blocks,
-				// 	{
-				// 		createdAt: new Date(),
-				// 		content: text
-				// 	}
-				// ]
+				// content:
+				// 	session.content.at(-1) === "\n"
+				// 		? session.content + text
+				// 		: session.content + "\n" + text
+				blocks: [
+					...session.blocks,
+					{
+						createdAt: new Date(),
+						content: text
+					}
+				]
 			};
 		});
 	}

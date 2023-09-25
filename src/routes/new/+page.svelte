@@ -22,18 +22,6 @@
 	let time = 300;
 	let timer: NodeJS.Timeout | null = null;
 
-	// let tiptap: Tiptap;
-
-	function toggleMode() {
-		currentSession.update((session) => {
-			if (!session) return null;
-			return {
-				...session,
-				mode: session.mode === "edit" ? "flow" : "edit"
-			};
-		});
-	}
-
 	function saveAndEndSession() {
 		sessions.update((sessions) => {
 			if (!sessions || !$currentSession) return [];
@@ -42,12 +30,18 @@
 				(session) => session.id === $currentSession?.id
 			);
 
+			/** convert blocks to content */
+			const content = $currentSession.blocks
+				.map((block) => block.content)
+				.join("\n");
+
 			if (!session)
 				return [
 					...sessions,
 					{
 						title: $currentSession.title,
-						content: $currentSession.content,
+						// content: $currentSession.content,
+						content,
 						createdAt: $currentSession.createdAt,
 						id: $currentSession.id,
 						mermaid: "",
@@ -61,7 +55,7 @@
 					return {
 						...session,
 						title: $currentSession.title,
-						content: $currentSession.content,
+						content,
 						createdAt: $currentSession.createdAt,
 						id: $currentSession.id,
 						mermaid: "",
@@ -90,9 +84,8 @@
 				});
 				const id = $currentSession?.id;
 				if (!id) return;
-				goto(`/local/${id}`);
-				toggleMode();
 				saveAndEndSession();
+				goto(`/local/${id}`);
 			} else {
 				// update to -1
 				currentSession.update((session) => {
@@ -119,7 +112,7 @@
 	};
 
 	$: isSession = !!$currentSession;
-	$: notEmpty = !!$currentSession?.content.trim();
+	$: notEmpty = $currentSession && $currentSession.blocks.length > 0;
 	$: {
 		if (isSession && !notEmpty && time !== -1)
 			currentSession.update((session) => {
