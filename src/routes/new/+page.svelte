@@ -2,10 +2,16 @@
 	import Disappearing from "$lib/components/Disappearing.svelte";
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+	import {
+		getModalStore,
+		SlideToggle,
+		type ModalSettings
+	} from "@skeletonlabs/skeleton";
 
 	import LucideTrash2 from "~icons/lucide/trash-2";
 	import LucideTimer from "~icons/lucide/timer";
+
+	import MdiMicrophoneOff from "~icons/mdi/microphone-off";
 
 	const modalStore = getModalStore();
 
@@ -16,54 +22,92 @@
 	import { fade } from "svelte/transition";
 	import { onMount } from "svelte";
 	import { format, formatDuration, secondsToHours } from "date-fns";
+	import { flip } from "svelte/animate";
+	import type { PageData } from "./$types";
+	import { dev } from "$app/environment";
+	import AudioRecording from "$lib/components/AudioRecording.svelte";
+	import { get, type Readable } from "svelte/store";
+	import type { CreekBlock, CreekSession } from "$lib/types/core";
 
 	let writer: Writer;
+	let audioRecorder: AudioRecording;
+	let snapshot: CreekSession | null = null;
 
 	let time = 300;
-	let timer: NodeJS.Timeout | null = null;
+	let record = true;
+	let timer: NodeJS.Timer | null = null;
 
-	// let tiptap: Tiptap;
+	async function saveAndEndSession() {
+		snapshot = get(currentSession);
+		if (!snapshot) return;
 
-	function toggleMode() {
-		currentSession.update((session) => {
-			if (!session) return null;
-			return {
-				...session,
-				mode: session.mode === "edit" ? "flow" : "edit"
-			};
-		});
-	}
+		await new Promise<void>((resolve) =>
+			setTimeout(() => {
+				currentSession.set(null);
+				resolve();
+			}, 0)
+		);
 
-	function saveAndEndSession() {
+		const blocks = await (async () => {
+			if (!snapshot.record) return snapshot.blocks;
+
+			try {
+				const res = await fetch("/api/whisper", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						session: snapshot
+					})
+				});
+
+				if (!res.ok) {
+					return snapshot.blocks;
+				}
+
+				const { blocks: newBlocks } = await res.json();
+
+				return newBlocks as CreekBlock[];
+			} catch (e) {
+				console.error(e);
+				return snapshot.blocks;
+			}
+		})();
+
 		sessions.update((sessions) => {
-			if (!sessions || !$currentSession) return [];
+			if (!sessions || !snapshot) return [];
 			// find the session by id if it exists
-			const session = sessions.find(
-				(session) => session.id === $currentSession?.id
-			);
+			const session = sessions.find((session) => session.id === snapshot?.id);
+
+			/** convert blocks to content */
+			const content = blocks
+				.filter((block) => block.type === "text")
+				.map((block) => block.content)
+				.join("\n");
 
 			if (!session)
 				return [
 					...sessions,
 					{
-						title: $currentSession.title,
-						content: $currentSession.content,
-						createdAt: $currentSession.createdAt,
-						id: $currentSession.id,
+						title: snapshot.title,
+						// content: snapshot.content,
+						content,
+						createdAt: snapshot.createdAt,
+						id: snapshot.id,
 						mermaid: "",
 						tidied: false
 					}
 				];
 
-			// if it exists, update it
 			return sessions.map((session) => {
-				if (session.id === $currentSession?.id) {
+				if (session.id === snapshot?.id) {
 					return {
 						...session,
-						title: $currentSession.title,
-						content: $currentSession.content,
-						createdAt: $currentSession.createdAt,
-						id: $currentSession.id,
+						title: snapshot.title,
+						content,
+						createdAt: snapshot.createdAt,
+						id: snapshot.id,
 						mermaid: "",
 						tidied: false
 					};
@@ -71,7 +115,8 @@
 				return session;
 			});
 		});
-		currentSession.set(null);
+
+		snapshot = null;
 	}
 
 	const modal: ModalSettings = {
@@ -84,23 +129,17 @@
 				currentSession.update((session) => {
 					if (!session) return null;
 					return {
-						...session,
-						tidied: false
+						...session
 					};
 				});
 				const id = $currentSession?.id;
 				if (!id) return;
-				goto(`/local/${id}`);
-				toggleMode();
-				saveAndEndSession();
-			} else {
-				// update to -1
-				currentSession.update((session) => {
-					if (!session) return null;
-					return {
-						...session,
-						time: -1
-					};
+				if ($currentSession?.record) {
+					audioRecorder.pushAudio(true);
+				}
+				setTimeout(async () => {
+					await saveAndEndSession();
+					await goto(`/local/${id}`);
 				});
 			}
 		}
@@ -113,45 +152,31 @@
 
 		response: (response: boolean) => {
 			if (response) {
+				if ($currentSession?.record) audioRecorder.stopRecording();
 				currentSession.set(null);
 			}
 		}
 	};
 
 	$: isSession = !!$currentSession;
-	$: notEmpty = !!$currentSession?.content.trim();
+	$: notEmpty = $currentSession && $currentSession.blocks.length > 0;
 	$: {
 		if (isSession && !notEmpty && time !== -1)
 			currentSession.update((session) => {
 				if (!session) return null;
 				return {
 					...session,
-					time: time
+					time: time,
+					record
 				};
 			});
 	}
 
 	$: {
-		// now let's time this up
-		if (isSession && !timer)
-			timer = setInterval(() => {
-				currentSession.update((session) => {
-					if (!session) return null;
-					if (session.time === 0) {
-						writer.pushAll();
-						modalStore.trigger(modal);
-					}
-					return {
-						...session,
-						time: session.time - 1
-					};
-				});
-			}, 1000);
-	}
-
-	$: {
-		if (timer && $currentSession && $currentSession.time < 0)
+		if (timer && $currentSession && $currentSession.time < 0) {
 			clearInterval(timer);
+			timer = null;
+		}
 	}
 
 	onMount(() => {
@@ -168,10 +193,37 @@
 
 <svelte:window
 	on:keydown={(e) => {
-		// if (e.altKey && e.key === "w" && $currentSession) {
-		// 	e.preventDefault();
-		// 	toggleMode();
-		// }
+		if (e.key === "Enter") {
+			if (!writer.focus) return;
+			e.preventDefault();
+			if (record) {
+				if (!$currentSession && !timer) {
+					audioRecorder.startRecording();
+					timer = setInterval(() => {
+						currentSession.update((session) => {
+							if (!session) return null;
+							if (session.time === 0) {
+								if ($currentSession?.record) {
+									audioRecorder.pushAudio();
+									audioRecorder.stopRecording();
+								}
+								writer.pushAll();
+								modalStore.trigger(modal);
+							}
+							return {
+								...session,
+								time: session.time - 1
+							};
+						});
+					}, 1000);
+				}
+			}
+			if ($currentSession && $currentSession.record) audioRecorder.pushAudio();
+			setTimeout(() => {
+				writer.pushAll();
+			}, 10);
+		}
+
 		if (e.key === "Escape") {
 			e.preventDefault();
 			// save and end session
@@ -181,28 +233,37 @@
 />
 
 <section class={cn("mx-auto p-4 container max-w-4xl space-y-1")}>
-	<div class="text-center">
-		{#if $currentSession}
-			<strong>🎯{$currentSession.title}</strong>
-		{:else}
-			<strong>What's the goal of this session?</strong>
-		{/if}
+	<div class="flex gap-2 justify-center items-center">
+		<div class="text-center">
+			{#if $currentSession}
+				<strong>🎯{$currentSession.title}</strong>
+			{:else}
+				<strong>What's the goal of this session?</strong>
+			{/if}
+		</div>
+
+		<span in:fade={{ duration: 300 }}>
+			<AudioRecording bind:this={audioRecorder} />
+		</span>
 	</div>
 
 	<div class="relative h-72 overflow-y-visible">
-		<!-- {#if !$currentSession || $currentSession.mode !== "edit"} -->
-		<Writer bind:this={writer} />
-		{#each $disappearingStore as disappearing (disappearing.id)}
-			<Disappearing setting={disappearing} className="text-3xl" />
-		{/each}
-		<!-- {:else if $currentSession.mode === "edit"}
-			<div class="h-full overflow-y-auto">
-				<Tiptap note={$currentSession} bind:this={tiptap} />
+		{#if !snapshot}
+			<Writer bind:this={writer} />
+			{#each $disappearingStore as disappearing (disappearing.id)}
+				<Disappearing setting={disappearing} className="text-3xl" />
+			{/each}
+		{:else}
+			<div class="h-full w-full grid place-content-center gap-4">
+				<h2 class="h2">Transcribing your notes...</h2>
+				<p class="p text-center">
+					This may take a while. <br /> Do not close this tab.
+				</p>
 			</div>
-		{/if} -->
+		{/if}
 	</div>
 
-	<section class="space-x-1 flex justify-center items-center gap-2">
+	<div class="space-x-1 flex justify-center items-center gap-2">
 		{#if $currentSession}
 			<button
 				class="btn-icon-sm flex items-center justify-center"
@@ -212,6 +273,7 @@
 			>
 				<LucideTrash2 class="w-4 h-4" />
 			</button>
+
 			{#if $currentSession.time >= 0}
 				{@const hours = secondsToHours($currentSession.time)}
 				{@const minutes = $currentSession.time / 60}
@@ -232,6 +294,21 @@
 				ESC | End session
 			</button>
 		{:else}
+			<SlideToggle
+				id="record"
+				name="record"
+				bind:checked={record}
+				size="sm"
+				active="bg-primary-500"
+			>
+				{#if !dev || record}
+					<label for="record" in:fade={{ duration: 300 }}>
+						<span>Type-And-Speak</span>
+						<span class="ml-1 chip variant-filled-primary">NEW</span>
+					</label>
+				{/if}
+			</SlideToggle>
+
 			<div
 				class="w-fit items-center input-group grid-cols-[auto_auto]"
 				in:fade={{ duration: 300 }}
@@ -246,5 +323,5 @@
 				</select>
 			</div>
 		{/if}
-	</section>
+	</div>
 </section>

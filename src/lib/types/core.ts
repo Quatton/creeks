@@ -4,12 +4,23 @@ export type CreekSession = {
 	id: string;
 	createdAt: Date;
 	title: string;
-	// blocks: CreekBlock[];
-	content: string;
-	mode: "flow" | "edit";
-	tidied: boolean;
+	blocks: CreekBlock[];
+	// content: string;
 	time: number;
+	record: boolean;
 };
+
+export type CreekBlock =
+	| {
+			type: "text";
+			createdAt: Date;
+			content: string;
+	  }
+	| {
+			type: "audio";
+			createdAt: Date;
+			content: string;
+	  };
 
 export type CreekNote = {
 	id: string;
@@ -25,8 +36,3 @@ export type CreekNote = {
 };
 
 export type SharedNote = Database["public"]["Tables"]["shared_notes"]["Row"];
-
-export type CreekBlock = {
-	createdAt: Date;
-	content: string;
-};

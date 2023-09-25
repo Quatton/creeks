@@ -113,7 +113,7 @@ ${note.content}`
 							: note.content;
 
 					// const combinedMermaid = [...allNotes, note]
-					// 	.map((note) => note.mermaid)
+					// 	.map((note) => $currentNote.mermaid)
 					// 	.join("\n\n");
 
 					sessions.update((sessions) => {
@@ -148,12 +148,12 @@ ${note.content}`
 		// sessions.update((sessions) => {
 		// 	return sessions.map((note) => {
 		// 		const creekNote: CreekNote = {
-		// 			content: note.content,
-		// 			createdAt: note.createdAt,
-		// 			id: note.id,
-		// 			mermaid: note.mermaid ?? "",
-		// 			title: note.title,
-		// 			tidied: note.tidied ?? false
+		// 			content: $currentNote.content,
+		// 			createdAt: $currentNote.createdAt,
+		// 			id: $currentNote.id,
+		// 			mermaid: $currentNote.mermaid ?? "",
+		// 			title: $currentNote.title,
+		// 			tidied: $currentNote.tidied ?? false
 		// 		};
 
 		// 		return creekNote;
@@ -184,7 +184,7 @@ ${note.content}`
 					transformCopiedText: true // Copied text is transformed to markdown
 				})
 			],
-			content: note.content,
+			content: $currentNote?.content ?? note.content,
 			onTransaction: ({ editor, transaction }) => {
 				// force re-render so `editor.isActive` works as expected
 				editor = editor;
@@ -235,7 +235,7 @@ ${instruction}
 
 		const res = await new Promise<boolean>((response, _) =>
 			modalStore.trigger({
-				title: "Deleting: " + note.title,
+				title: "Deleting: " + $currentNote?.title ?? note.title,
 				body: "This will <strong>instantly</strong> delete the note!",
 				type: "confirm",
 				response
@@ -306,7 +306,7 @@ ${instruction}
 
 		const res = await new Promise<boolean>((response, _) =>
 			modalStore.trigger({
-				title: "Stop sharing: " + note.title,
+				title: "Stop sharing: " + $currentNote?.title ?? note.title,
 				body: "This will <strong>instantly</strong> stop sharing the note!",
 				type: "confirm",
 				response
