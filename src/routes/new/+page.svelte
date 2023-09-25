@@ -140,7 +140,7 @@
 				setTimeout(async () => {
 					await saveAndEndSession();
 					await goto(`/local/${id}`);
-				});
+				}, 300);
 			}
 		}
 	};
@@ -254,7 +254,10 @@
 				<Disappearing setting={disappearing} className="text-3xl" />
 			{/each}
 		{:else}
-			<div class="h-full w-full grid place-content-center gap-4">
+			<div
+				class="h-full w-full grid place-content-center gap-4"
+				in:fade={{ duration: 300 }}
+			>
 				<h2 class="h2">Transcribing your notes...</h2>
 				<p class="p text-center">
 					This may take a while. <br /> Do not close this tab.
