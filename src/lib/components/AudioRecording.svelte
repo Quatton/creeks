@@ -12,6 +12,7 @@
 
 	import MdiMicrophone from "~icons/mdi/microphone";
 	import MdiMicrophoneOff from "~icons/mdi/microphone-off";
+	import { get } from "svelte/store";
 	export let {
 		onRecordingComplete,
 		onNotAllowedOrFound,
@@ -33,23 +34,43 @@
 	// 		}
 	// );
 
-	export const pushAudio = () => {
-		if (!$isRecording) return;
+	export const pushAudio = (end = false) => {
+		if (!$isRecording) {
+			console.warn("Not recording");
+			return;
+		}
+
 		stopRecording();
 
-		currentSession.update((session) => {
-			if (!session || !$recordingBlob) return session;
+		const reader = new FileReader();
+		new Promise<typeof reader.result>(async (resolve, reject) => {
+			await new Promise((resolve) => setTimeout(resolve, 1));
+			const blobSnapshot = get(recordingBlob);
+			if (!blobSnapshot) return reject("No blob snapshot");
+			reader.readAsDataURL(blobSnapshot);
+			reader.onloadend = () => {
+				const base64data = reader.result;
+				resolve(base64data);
+			};
+		})
+			.then((base64data) => {
+				currentSession.update((session) => {
+					if (!session || !base64data) return session;
 
-			session.blocks.push({
-				type: "audio",
-				content: $recordingBlob,
-				createdAt: new Date()
+					session.blocks.push({
+						type: "audio",
+						content: base64data as string,
+						createdAt: new Date()
+					});
+
+					if (!end) startRecording();
+
+					return session;
+				});
+			})
+			.catch((err) => {
+				console.error(err);
 			});
-
-			return session;
-		});
-
-		startRecording();
 	};
 
 	const _startTimer = () => {
@@ -70,8 +91,7 @@
 	 * Calling this method would result in the recording to start. Sets `isRecording` to true
 	 */
 	export const startRecording = () => {
-		console.log("startRecording");
-
+		console.log("ran");
 		if ($timerInterval !== undefined) {
 			return;
 		}
@@ -107,11 +127,7 @@
 	 * Calling this method results in a recording in progress being stopped and the resulting audio being present in `recordingBlob`. Sets `isRecording` to false
 	 */
 	export const stopRecording = () => {
-		if ($mediaRecorder === undefined) {
-			return;
-		}
-
-		$mediaRecorder.stop();
+		$mediaRecorder?.stop();
 		_stopTimer();
 		recordingTime.set(0);
 		isRecording.set(false);

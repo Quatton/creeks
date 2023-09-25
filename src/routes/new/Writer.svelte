@@ -1,3 +1,5 @@
+<svelte:options accessors />
+
 <script lang="ts">
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
@@ -12,6 +14,8 @@
 	 *
 	 * On subsequent messages, if session, append the message to the title.
 	 */
+
+	export let focus = false;
 
 	let text = "";
 	function push(text: string) {
@@ -67,5 +71,10 @@
 	class="p-0 absolute inset-0 resize-none outline-none focus:ring-0 border-none bg-transparent text-3xl z-40"
 	placeholder={$currentSession ? "Keep writing..." : "I want to write about..."}
 	bind:value={text}
-	autofocus
+	on:focus={() => {
+		focus = true;
+	}}
+	on:blur={() => {
+		focus = false;
+	}}
 />

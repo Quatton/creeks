@@ -19,7 +19,7 @@ export type CreekBlock =
 	| {
 			type: "audio";
 			createdAt: Date;
-			content: Blob;
+			content: string;
 	  };
 
 export type CreekNote = {

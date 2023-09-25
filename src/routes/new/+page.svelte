@@ -27,24 +27,62 @@
 	import { dev } from "$app/environment";
 	import AudioRecording from "$lib/components/AudioRecording.svelte";
 	import { get, type Readable } from "svelte/store";
+	import type { CreekBlock, CreekSession } from "$lib/types/core";
 
 	let writer: Writer;
 	let audioRecorder: AudioRecording;
+	let snapshot: CreekSession | null = null;
 
 	let time = 300;
 	let record = true;
 	let timer: NodeJS.Timer | null = null;
 
 	async function saveAndEndSession() {
+		snapshot = get(currentSession);
+		if (!snapshot) return;
+
+		await new Promise<void>((resolve) =>
+			setTimeout(() => {
+				currentSession.set(null);
+				resolve();
+			}, 0)
+		);
+
+		const blocks = await (async () => {
+			if (!snapshot.record) return snapshot.blocks;
+
+			try {
+				const res = await fetch("/api/whisper", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						session: snapshot
+					})
+				});
+
+				if (!res.ok) {
+					return snapshot.blocks;
+				}
+
+				const { blocks: newBlocks } = await res.json();
+
+				return newBlocks as CreekBlock[];
+			} catch (e) {
+				console.error(e);
+				return snapshot.blocks;
+			}
+		})();
+
 		sessions.update((sessions) => {
-			if (!sessions || !$currentSession) return [];
+			if (!sessions || !snapshot) return [];
 			// find the session by id if it exists
-			const session = sessions.find(
-				(session) => session.id === $currentSession?.id
-			);
+			const session = sessions.find((session) => session.id === snapshot?.id);
 
 			/** convert blocks to content */
-			const content = $currentSession.blocks
+			const content = blocks
+				.filter((block) => block.type === "text")
 				.map((block) => block.content)
 				.join("\n");
 
@@ -52,25 +90,24 @@
 				return [
 					...sessions,
 					{
-						title: $currentSession.title,
-						// content: $currentSession.content,
+						title: snapshot.title,
+						// content: snapshot.content,
 						content,
-						createdAt: $currentSession.createdAt,
-						id: $currentSession.id,
+						createdAt: snapshot.createdAt,
+						id: snapshot.id,
 						mermaid: "",
 						tidied: false
 					}
 				];
 
-			// if it exists, update it
 			return sessions.map((session) => {
-				if (session.id === $currentSession?.id) {
+				if (session.id === snapshot?.id) {
 					return {
 						...session,
-						title: $currentSession.title,
+						title: snapshot.title,
 						content,
-						createdAt: $currentSession.createdAt,
-						id: $currentSession.id,
+						createdAt: snapshot.createdAt,
+						id: snapshot.id,
 						mermaid: "",
 						tidied: false
 					};
@@ -78,7 +115,8 @@
 				return session;
 			});
 		});
-		currentSession.set(null);
+
+		snapshot = null;
 	}
 
 	const modal: ModalSettings = {
@@ -86,7 +124,7 @@
 		title: "End session?",
 		body: "Are you sure you want to end this session?",
 
-		response: async (response: boolean) => {
+		response: (response: boolean) => {
 			if (response) {
 				currentSession.update((session) => {
 					if (!session) return null;
@@ -96,17 +134,12 @@
 				});
 				const id = $currentSession?.id;
 				if (!id) return;
-				if ($currentSession?.record) audioRecorder.$stopRecording();
-				await saveAndEndSession();
-				goto(`/local/${id}`);
-			} else {
-				// update to -1
-				currentSession.update((session) => {
-					if (!session) return null;
-					return {
-						...session,
-						time: -1
-					};
+				if ($currentSession?.record) {
+					audioRecorder.pushAudio(true);
+				}
+				setTimeout(async () => {
+					await saveAndEndSession();
+					await goto(`/local/${id}`);
 				});
 			}
 		}
@@ -119,6 +152,7 @@
 
 		response: (response: boolean) => {
 			if (response) {
+				if ($currentSession?.record) audioRecorder.stopRecording();
 				currentSession.set(null);
 			}
 		}
@@ -139,30 +173,9 @@
 	}
 
 	$: {
-		// now let's time this up
-		if (isSession && !timer)
-			timer = setInterval(() => {
-				currentSession.update((session) => {
-					if (!session) return null;
-					if (session.time === 0) {
-						writer.pushAll();
-						if ($currentSession?.record) {
-							audioRecorder.pushAudio();
-							audioRecorder.stopRecording();
-						}
-						modalStore.trigger(modal);
-					}
-					return {
-						...session,
-						time: session.time - 1
-					};
-				});
-			}, 1000);
-	}
-
-	$: {
 		if (timer && $currentSession && $currentSession.time < 0) {
 			clearInterval(timer);
+			timer = null;
 		}
 	}
 
@@ -181,18 +194,37 @@
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === "Enter") {
+			if (!writer.focus) return;
 			e.preventDefault();
-			writer.pushAll();
-			setTimeout(() => {
-				if ($currentSession && $currentSession.record) {
-					if ($currentSession.blocks.length === 0) {
-						audioRecorder.startRecording();
-					} else {
-						audioRecorder.pushAudio();
-					}
+			if (record) {
+				if (!$currentSession && !timer) {
+					console.log("start?");
+					audioRecorder.startRecording();
+					timer = setInterval(() => {
+						currentSession.update((session) => {
+							if (!session) return null;
+							if (session.time === 0) {
+								if ($currentSession?.record) {
+									audioRecorder.pushAudio();
+									audioRecorder.stopRecording();
+								}
+								writer.pushAll();
+								modalStore.trigger(modal);
+							}
+							return {
+								...session,
+								time: session.time - 1
+							};
+						});
+					}, 1000);
 				}
-			});
+			}
+			if ($currentSession && $currentSession.record) audioRecorder.pushAudio();
+			setTimeout(() => {
+				writer.pushAll();
+			}, 10);
 		}
+
 		if (e.key === "Escape") {
 			e.preventDefault();
 			// save and end session
@@ -212,21 +244,30 @@
 		</div>
 
 		<span in:fade={{ duration: 300 }}>
-			<AudioRecording bind:this={audioRecorder} />
+			<AudioRecording
+				audioTrackConstraints={{
+					echoCancellation: true,
+					noiseSuppression: true
+				}}
+				bind:this={audioRecorder}
+			/>
 		</span>
 	</div>
 
 	<div class="relative h-72 overflow-y-visible">
-		<!-- {#if !$currentSession || $currentSession.mode !== "edit"} -->
-		<Writer bind:this={writer} />
-		{#each $disappearingStore as disappearing (disappearing.id)}
-			<Disappearing setting={disappearing} className="text-3xl" />
-		{/each}
-		<!-- {:else if $currentSession.mode === "edit"}
-			<div class="h-full overflow-y-auto">
-				<Tiptap note={$currentSession} bind:this={tiptap} />
+		{#if !snapshot}
+			<Writer bind:this={writer} />
+			{#each $disappearingStore as disappearing (disappearing.id)}
+				<Disappearing setting={disappearing} className="text-3xl" />
+			{/each}
+		{:else}
+			<div class="h-full w-full grid place-content-center gap-4">
+				<h2 class="h2">Transcribing your notes...</h2>
+				<p class="p text-center">
+					This may take a while. <br /> Do not close this tab.
+				</p>
 			</div>
-		{/if} -->
+		{/if}
 	</div>
 
 	<div class="space-x-1 flex justify-center items-center gap-2">
