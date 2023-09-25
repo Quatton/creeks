@@ -23,7 +23,7 @@
 					title: text,
 					blocks: [],
 					// content: "",
-					tidied: false,
+					record: false,
 					time: -1
 				};
 			}
@@ -36,6 +36,7 @@
 				blocks: [
 					...session.blocks,
 					{
+						type: "text",
 						createdAt: new Date(),
 						content: text
 					}
@@ -60,15 +61,6 @@
 		text = "";
 	}
 </script>
-
-<svelte:window
-	on:keydown={(e) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			pushAll();
-		}
-	}}
-/>
 
 <!-- svelte-ignore a11y-autofocus -->
 <textarea

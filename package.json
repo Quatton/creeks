@@ -16,6 +16,7 @@
 	"devDependencies": {
 		"@fontsource/fira-mono": "^4.5.10",
 		"@iconify-json/lucide": "^1.1.117",
+		"@iconify-json/mdi": "^1.1.54",
 		"@neoconfetti/svelte": "^1.0.0",
 		"@playwright/test": "^1.28.1",
 		"@skeletonlabs/skeleton": "^2.0.0",
@@ -50,6 +51,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@ffmpeg/ffmpeg": "^0.12.6",
 		"@floating-ui/dom": "^1.5.2",
 		"@iconify-json/grommet-icons": "^1.1.7",
 		"@supabase/auth-helpers-sveltekit": "^0.10.2",

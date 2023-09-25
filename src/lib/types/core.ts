@@ -6,14 +6,21 @@ export type CreekSession = {
 	title: string;
 	blocks: CreekBlock[];
 	// content: string;
-	tidied: boolean;
 	time: number;
+	record: boolean;
 };
 
-export type CreekBlock = {
-	createdAt: Date;
-	content: string;
-};
+export type CreekBlock =
+	| {
+			type: "text";
+			createdAt: Date;
+			content: string;
+	  }
+	| {
+			type: "audio";
+			createdAt: Date;
+			content: Blob;
+	  };
 
 export type CreekNote = {
 	id: string;

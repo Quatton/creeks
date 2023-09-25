@@ -2,10 +2,16 @@
 	import Disappearing from "$lib/components/Disappearing.svelte";
 	import { currentSession, sessions } from "$lib/stores/core";
 	import { disappearingStore } from "$lib/stores/disappearing";
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton";
+	import {
+		getModalStore,
+		SlideToggle,
+		type ModalSettings
+	} from "@skeletonlabs/skeleton";
 
 	import LucideTrash2 from "~icons/lucide/trash-2";
 	import LucideTimer from "~icons/lucide/timer";
+
+	import MdiMicrophoneOff from "~icons/mdi/microphone-off";
 
 	const modalStore = getModalStore();
 
@@ -16,13 +22,20 @@
 	import { fade } from "svelte/transition";
 	import { onMount } from "svelte";
 	import { format, formatDuration, secondsToHours } from "date-fns";
+	import { flip } from "svelte/animate";
+	import type { PageData } from "./$types";
+	import { dev } from "$app/environment";
+	import AudioRecording from "$lib/components/AudioRecording.svelte";
+	import { get, type Readable } from "svelte/store";
 
 	let writer: Writer;
+	let audioRecorder: AudioRecording;
 
 	let time = 300;
-	let timer: NodeJS.Timeout | null = null;
+	let record = true;
+	let timer: NodeJS.Timer | null = null;
 
-	function saveAndEndSession() {
+	async function saveAndEndSession() {
 		sessions.update((sessions) => {
 			if (!sessions || !$currentSession) return [];
 			// find the session by id if it exists
@@ -73,18 +86,18 @@
 		title: "End session?",
 		body: "Are you sure you want to end this session?",
 
-		response: (response: boolean) => {
+		response: async (response: boolean) => {
 			if (response) {
 				currentSession.update((session) => {
 					if (!session) return null;
 					return {
-						...session,
-						tidied: false
+						...session
 					};
 				});
 				const id = $currentSession?.id;
 				if (!id) return;
-				saveAndEndSession();
+				if ($currentSession?.record) audioRecorder.$stopRecording();
+				await saveAndEndSession();
 				goto(`/local/${id}`);
 			} else {
 				// update to -1
@@ -119,7 +132,8 @@
 				if (!session) return null;
 				return {
 					...session,
-					time: time
+					time: time,
+					record
 				};
 			});
 	}
@@ -132,6 +146,10 @@
 					if (!session) return null;
 					if (session.time === 0) {
 						writer.pushAll();
+						if ($currentSession?.record) {
+							audioRecorder.pushAudio();
+							audioRecorder.stopRecording();
+						}
 						modalStore.trigger(modal);
 					}
 					return {
@@ -143,8 +161,9 @@
 	}
 
 	$: {
-		if (timer && $currentSession && $currentSession.time < 0)
+		if (timer && $currentSession && $currentSession.time < 0) {
 			clearInterval(timer);
+		}
 	}
 
 	onMount(() => {
@@ -161,10 +180,19 @@
 
 <svelte:window
 	on:keydown={(e) => {
-		// if (e.altKey && e.key === "w" && $currentSession) {
-		// 	e.preventDefault();
-		// 	toggleMode();
-		// }
+		if (e.key === "Enter") {
+			e.preventDefault();
+			writer.pushAll();
+			setTimeout(() => {
+				if ($currentSession && $currentSession.record) {
+					if ($currentSession.blocks.length === 0) {
+						audioRecorder.startRecording();
+					} else {
+						audioRecorder.pushAudio();
+					}
+				}
+			});
+		}
 		if (e.key === "Escape") {
 			e.preventDefault();
 			// save and end session
@@ -174,12 +202,18 @@
 />
 
 <section class={cn("mx-auto p-4 container max-w-4xl space-y-1")}>
-	<div class="text-center">
-		{#if $currentSession}
-			<strong>🎯{$currentSession.title}</strong>
-		{:else}
-			<strong>What's the goal of this session?</strong>
-		{/if}
+	<div class="flex gap-2 justify-center items-center">
+		<div class="text-center">
+			{#if $currentSession}
+				<strong>🎯{$currentSession.title}</strong>
+			{:else}
+				<strong>What's the goal of this session?</strong>
+			{/if}
+		</div>
+
+		<span in:fade={{ duration: 300 }}>
+			<AudioRecording bind:this={audioRecorder} />
+		</span>
 	</div>
 
 	<div class="relative h-72 overflow-y-visible">
@@ -195,7 +229,7 @@
 		{/if} -->
 	</div>
 
-	<section class="space-x-1 flex justify-center items-center gap-2">
+	<div class="space-x-1 flex justify-center items-center gap-2">
 		{#if $currentSession}
 			<button
 				class="btn-icon-sm flex items-center justify-center"
@@ -205,6 +239,7 @@
 			>
 				<LucideTrash2 class="w-4 h-4" />
 			</button>
+
 			{#if $currentSession.time >= 0}
 				{@const hours = secondsToHours($currentSession.time)}
 				{@const minutes = $currentSession.time / 60}
@@ -225,6 +260,21 @@
 				ESC | End session
 			</button>
 		{:else}
+			<SlideToggle
+				id="record"
+				name="record"
+				bind:checked={record}
+				size="sm"
+				active="bg-primary-500"
+			>
+				{#if !dev || record}
+					<label for="record" in:fade={{ duration: 300 }}>
+						<span>Type-And-Speak</span>
+						<span class="ml-1 chip variant-filled-primary">NEW</span>
+					</label>
+				{/if}
+			</SlideToggle>
+
 			<div
 				class="w-fit items-center input-group grid-cols-[auto_auto]"
 				in:fade={{ duration: 300 }}
@@ -239,5 +289,5 @@
 				</select>
 			</div>
 		{/if}
-	</section>
+	</div>
 </section>
