@@ -63,7 +63,7 @@ function blocksToFiles(session: CreekSession): {
 				return {
 					file,
 					prompt: `${session.title} ${
-						session.blocks[i + 1].type === "text"
+						session.blocks.at(i + 1)?.type === "text"
 							? session.blocks[i + 1].content
 							: ""
 					}`
