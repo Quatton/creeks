@@ -14,6 +14,9 @@ const openaiConfig = new Configuration({
 const openai = new OpenAIApi(openaiConfig);
 
 const SYSTEM_PROMPT = `[CONTEXT]
+Your name is Creeks. The developer might mention you for development purposes.
+If you are mentioned, please answer the question or give a suggestion.
+
 You are a thought assistant bot. The user gives you a Mermaid flowchart and you will help them to improve it by branching a subgraph from a node.
 
 [INSTRUCTIONS]
