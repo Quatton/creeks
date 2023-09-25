@@ -98,14 +98,19 @@
 
 					allNotes = [$currentNote ? $currentNote : note, ...allNotes];
 
-					const combinedContent = `${allNotes
-						.map(
-							(note) => `# ${note.title}
+					const combinedContent =
+						combineWith.length > 0
+							? `${allNotes
+									.map(
+										(note) => `# ${note.title}
 > ${format(new Date(note.createdAt), "yyyy MMM dd - HH:mm")}
 
 ${note.content}`
-						)
-						.join("\n\n")}`;
+									)
+									.join("\n\n")}`
+							: $currentNote
+							? $currentNote.content
+							: note.content;
 
 					// const combinedMermaid = [...allNotes, note]
 					// 	.map((note) => note.mermaid)
@@ -119,7 +124,10 @@ ${note.content}`
 								content: combinedContent,
 								createdAt: new Date(),
 								id,
-								mermaid: "",
+								mermaid:
+									combineWith.length === 0
+										? ($currentNote ? $currentNote : note).mermaid
+										: "",
 								tidied: false
 							}
 						];
