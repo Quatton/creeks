@@ -19,6 +19,8 @@ export async function POST({ request }) {
 				prompt
 			});
 
+			console.log(file.size);
+
 			return response.text;
 		})
 	);
@@ -37,10 +39,11 @@ export async function POST({ request }) {
 
 	const blocks = session.blocks.map((block: CreekBlock) => {
 		if (block.type === "audio") {
+			const text = texts.shift();
 			return {
 				type: "text",
 				createdAt: block.createdAt,
-				content: ">" + (texts.shift() ?? "") + "\n"
+				content: text ? `> ${text}\n` : ``
 			};
 		} else {
 			return block;
@@ -56,13 +59,8 @@ function blocksToFiles(session: CreekSession): {
 	file: File;
 	prompt: string;
 }[] {
-	const prompt = `${session.title} ${session.blocks
-		.filter((block) => block.type === "text")
-		.map((block) => block.content)
-		.join("")}`;
-
 	const blocks = session.blocks
-		.map((block: CreekBlock) => {
+		.map((block: CreekBlock, i) => {
 			if (block.type === "audio") {
 				const file = new File(
 					[Buffer.from(block.content.split(",")[1], "base64")],
@@ -73,7 +71,11 @@ function blocksToFiles(session: CreekSession): {
 				);
 				return {
 					file,
-					prompt
+					prompt: `${session.title} ${
+						session.blocks[i + 1].type === "text"
+							? session.blocks[i + 1].content
+							: ""
+					}`
 				};
 			} else {
 				return null;

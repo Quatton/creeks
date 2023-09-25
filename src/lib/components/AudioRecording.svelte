@@ -42,35 +42,7 @@
 
 		stopRecording();
 
-		const reader = new FileReader();
-		new Promise<typeof reader.result>(async (resolve, reject) => {
-			await new Promise((resolve) => setTimeout(resolve, 1));
-			const blobSnapshot = get(recordingBlob);
-			if (!blobSnapshot) return reject("No blob snapshot");
-			reader.readAsDataURL(blobSnapshot);
-			reader.onloadend = () => {
-				const base64data = reader.result;
-				resolve(base64data);
-			};
-		})
-			.then((base64data) => {
-				currentSession.update((session) => {
-					if (!session || !base64data) return session;
-
-					session.blocks.push({
-						type: "audio",
-						content: base64data as string,
-						createdAt: new Date()
-					});
-
-					if (!end) startRecording();
-
-					return session;
-				});
-			})
-			.catch((err) => {
-				console.error(err);
-			});
+		if (!end) startRecording();
 	};
 
 	const _startTimer = () => {
@@ -91,14 +63,19 @@
 	 * Calling this method would result in the recording to start. Sets `isRecording` to true
 	 */
 	export const startRecording = () => {
-		console.log("ran");
 		if ($timerInterval !== undefined) {
 			return;
 		}
 
 		navigator.mediaDevices
 			.getUserMedia({
-				audio: audioTrackConstraints ?? true
+				audio: audioTrackConstraints
+					? {
+							...audioTrackConstraints,
+							// @ts-ignore
+							suppressLocalAudioPlayback: false
+					  }
+					: true
 			})
 			.then((stream) => {
 				isRecording.set(true);
@@ -200,18 +177,36 @@
 		a.remove();
 	};
 
-	// $: {
-	// 	if (
-	// 		(shouldSave || recorderControls) &&
-	// 		!!$recordingBlob &&
-	// 		!!onRecordingComplete
-	// 	) {
-	// 		onRecordingComplete($recordingBlob);
-	// 		if (downloadOnSavePress) {
-	// 			void downloadBlob($recordingBlob);
-	// 		}
-	// 	}
-	// }
+	$: {
+		if ($recordingBlob !== undefined) {
+			const reader = new FileReader();
+
+			new Promise<typeof reader.result>(async (resolve) => {
+				reader.onloadend = () => {
+					const base64data = reader.result;
+					resolve(base64data);
+				};
+			})
+				.then((base64data) => {
+					currentSession.update((session) => {
+						if (!session || !base64data) return session;
+
+						session.blocks.push({
+							type: "audio",
+							content: base64data as string,
+							createdAt: new Date()
+						});
+
+						return session;
+					});
+				})
+				.catch((err) => {
+					console.error(err);
+				});
+
+			reader.readAsDataURL($recordingBlob!);
+		}
+	}
 </script>
 
 {#if $isRecording}

@@ -244,13 +244,7 @@
 		</div>
 
 		<span in:fade={{ duration: 300 }}>
-			<AudioRecording
-				audioTrackConstraints={{
-					echoCancellation: true,
-					noiseSuppression: true
-				}}
-				bind:this={audioRecorder}
-			/>
+			<AudioRecording bind:this={audioRecorder} />
 		</span>
 	</div>
 
